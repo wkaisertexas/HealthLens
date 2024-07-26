@@ -10,7 +10,6 @@
 		3E98758E2C46E5A300FD1CA5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E98758D2C46E5A300FD1CA5 /* Logger.swift */; };
 		3EA025C02C32FE7300EEC4C3 /* HealthLensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA025BF2C32FE7300EEC4C3 /* HealthLensApp.swift */; };
 		3EA025C22C32FE7300EEC4C3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA025C12C32FE7300EEC4C3 /* ContentView.swift */; };
-		3EA025C42C32FE7300EEC4C3 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA025C32C32FE7300EEC4C3 /* Item.swift */; };
 		3EA025C62C32FE7500EEC4C3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3EA025C52C32FE7500EEC4C3 /* Assets.xcassets */; };
 		3EA025C92C32FE7500EEC4C3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3EA025C82C32FE7500EEC4C3 /* Preview Assets.xcassets */; };
 		3EA025D32C32FE7500EEC4C3 /* HealthLensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA025D22C32FE7500EEC4C3 /* HealthLensTests.swift */; };
@@ -44,7 +43,6 @@
 		3EA025BC2C32FE7300EEC4C3 /* HealthLens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthLens.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3EA025BF2C32FE7300EEC4C3 /* HealthLensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthLensApp.swift; sourceTree = "<group>"; };
 		3EA025C12C32FE7300EEC4C3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		3EA025C32C32FE7300EEC4C3 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		3EA025C52C32FE7500EEC4C3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3EA025C82C32FE7500EEC4C3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		3EA025CE2C32FE7500EEC4C3 /* HealthLensTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HealthLensTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -114,7 +112,6 @@
 				3EF2608D2C448056001ABA12 /* Info.plist */,
 				3EA025BF2C32FE7300EEC4C3 /* HealthLensApp.swift */,
 				3EA025C12C32FE7300EEC4C3 /* ContentView.swift */,
-				3EA025C32C32FE7300EEC4C3 /* Item.swift */,
 				3EA025C52C32FE7500EEC4C3 /* Assets.xcassets */,
 				3EA025C72C32FE7500EEC4C3 /* Preview Content */,
 				3EF2608F2C457494001ABA12 /* ContentViewModel.swift */,
@@ -292,7 +289,6 @@
 				3E98758E2C46E5A300FD1CA5 /* Logger.swift in Sources */,
 				3EF260902C457494001ABA12 /* ContentViewModel.swift in Sources */,
 				3EA025C22C32FE7300EEC4C3 /* ContentView.swift in Sources */,
-				3EA025C42C32FE7300EEC4C3 /* Item.swift in Sources */,
 				3EF9FD132C498499000F4341 /* ExportFile.swift in Sources */,
 				3EA025C02C32FE7300EEC4C3 /* HealthLensApp.swift in Sources */,
 			);
@@ -468,13 +464,15 @@
 				INFOPLIST_KEY_CFBundleDisplayName = HealthLens;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use the usage description to do the following: export it to a csv format";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Updating health data is only required by HealtKit and we should never ask for this information";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
-				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -489,7 +487,7 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -511,13 +509,15 @@
 				INFOPLIST_KEY_CFBundleDisplayName = HealthLens;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use the usage description to do the following: export it to a csv format";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Updating health data is only required by HealtKit and we should never ask for this information";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
-				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -532,7 +532,7 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

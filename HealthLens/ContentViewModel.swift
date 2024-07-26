@@ -27,7 +27,7 @@ class ContentViewModel: ObservableObject {
       .map { quantityMapping[$0]! }
       .sorted()
       .joined(separator: "-")
-      .replacingOccurrences(of: " ", with: "").lowercased()
+      .replacingOccurrences(of: " ", with: ".").lowercased()
 
     return "\(result).csv"
   }
@@ -319,6 +319,9 @@ class ContentViewModel: ObservableObject {
 
   /// Exports health data in an async function which can be exported to the transferable object w/ proper await support
   func asyncExportHealthData() async -> String {
+    // analytics logging
+    logExportOccurred()
+      
     return await withUnsafeContinuation { continuation in
       exportHealthData(continuation: continuation)
     }
@@ -470,21 +473,17 @@ class ContentViewModel: ObservableObject {
   }
 
   /// Makes a list of types selected to show for the user's summary
-  public func makeSelectedStringDescription() -> String? {
-    if selectedQuantityTypes.count == 0 {
-      return nil
-    }
-
+  public func makeSelectedStringDescription() -> String {
     return selectedQuantityTypes.map({ quantityMapping[$0]! }).sorted().joined(separator: ", ")
   }
 
   /// Analytics reporting which may ask for a review if numbers are high enough
-  @MainActor func logExportOccurred() {
+  func logExportOccurred() {
     timesExported += 1
     categoriesExported += selectedQuantityTypes.count
 
     // decision point on whether or not to ask for a review
-    if timesExported >= 5 || categoriesExported >= 25, let bundle = Bundle.main.bundleIdentifier,
+    if timesExported >= 2 || categoriesExported >= 10, let bundle = Bundle.main.bundleIdentifier,
       lastRequested != bundle
     {
       lastRequested = bundle

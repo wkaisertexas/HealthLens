@@ -9,30 +9,13 @@ struct ContentView: View {
   @Environment(\.requestReview) private var requestReview
 
   var body: some View {
-    NavigationSplitView {
-      if let selectedTypesDescription = contentViewModel.makeSelectedStringDescription() {
-        HStack {
-          ScrollView(.horizontal) {
-            (Text("Exporting (\(contentViewModel.selectedQuantityTypes.count)) ").fontWeight(
-              .semibold) + Text(selectedTypesDescription)).padding().lineLimit(1)
-          }
-          Spacer()
-          Button(action: {
-            withAnimation {
-              contentViewModel.clearExportQueue()
-            }
-          }) {
-            Image(systemName: "clear")
-          }
-        }.padding()
-      }
-
+    NavigationStack{
       List {
-        Section("Info") {
+        Section {
           VStack {
             Text("HealthLens").font(.largeTitle).fontWeight(.bold).frame(
               maxWidth: .infinity, alignment: .leading)
-            Text("Export your Health Data to a CSV").font(.subheadline).frame(
+            Text("Export your health data as a CSV").font(.subheadline).frame(
               maxWidth: .infinity, alignment: .leading)
           }
 
@@ -95,7 +78,7 @@ struct ContentView: View {
                 }
               }) {
                 HStack {
-                  Text(contentViewModel.quantityMapping[quant]!)
+                    Text(contentViewModel.quantityMapping[quant]!).foregroundStyle(Color.black)
                   Spacer()
                   contentViewModel.selectedQuantityTypes.contains(quant)
                     ? Image(systemName: "checkmark").foregroundColor(.blue) : nil
@@ -121,17 +104,29 @@ struct ContentView: View {
           }
         }
       }
+      .navigationTitle(Text(contentViewModel.selectedQuantityTypes.count > 0 ? "Exporting \(contentViewModel.selectedQuantityTypes.count) item\(contentViewModel.selectedQuantityTypes.count == 1 ? "": "s")" : ""))
+      .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .automatic) {
           ShareLink(
             item: contentViewModel.shareTarget,
             preview: SharePreview(
-              contentViewModel.makeSelectedStringDescription() ?? "Exporting health data")
+                "Exporting \(contentViewModel.makeSelectedStringDescription())")
           ).disabled(contentViewModel.selectedQuantityTypes.count == 0)
         }
+
+          ToolbarItem(placement: .topBarLeading){
+              Button(action: {
+                withAnimation {
+                  contentViewModel.clearExportQueue()
+                }
+              }) {
+                Image(systemName: "clear")
+              }
+              .accessibilityHint("Clear the selected HealthKit types")
+              .disabled(contentViewModel.selectedQuantityTypes.count == 0)
+          }
       }
-    } detail: {
-      Text("Select heath categories to export")
     }
   }
 }
@@ -145,5 +140,4 @@ let itemFormatter: DateFormatter = {
 
 #Preview {
   ContentView()
-    .modelContainer(for: Item.self, inMemory: true)
 }
