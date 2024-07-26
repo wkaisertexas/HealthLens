@@ -461,7 +461,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HealthLens/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = HealthLens;
+				INFOPLIST_KEY_CFBundleDisplayName = "Health Lens";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use the usage description to do the following: export it to a csv format";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Updating health data is only required by HealtKit and we should never ask for this information";
@@ -506,7 +506,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = HealthLens/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = HealthLens;
+				INFOPLIST_KEY_CFBundleDisplayName = "Health Lens";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We use the usage description to do the following: export it to a csv format";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Updating health data is only required by HealtKit and we should never ask for this information";
