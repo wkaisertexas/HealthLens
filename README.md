@@ -1,36 +1,84 @@
-# HealthLens
+<img alt="HealthLens" src="https://github.com/user-attachments/assets/efd0a4aa-cb52-4b65-b68b-6c6a1e4f087d" />
 
-Health Lens is a iOS HealthKit application that allows users to export and analyze their health data. The goal with HealthLens is to be the missing "export" button for health-related data for data-obsessed users looking for personalized analytics.
+<h1 align="center">Health Lens - CSV Exporter</h1>
 
-## Inspiration
+<p align="center">
+  Health's missing export button
+</p>
 
-The inspiration for Health Lens comes from my brother, Matthew, who once exclaimed that he "wanted a Power BI dashboard for his health". For those unfamiliar, [Power BI](https://www.microsoft.com/en-us/power-platform/products/power-bi) is [Tableau](https://www.tableau.com/) for people lacking taste. 
+<p align="center">
+  <a href="#introduction"><strong>Introduction</strong></a> ·
+  <a href="#features"><strong>Features</strong></a> ·
+  <a href="#installation"><strong>Installation</strong></a> ·
+  <a href="#roadmap"><strong>Roadmap</strong></a> ·
+  <a href="#contributing"><strong>Contributing</strong></a>
+</p>
+<br/>
 
-Despite the poor choice in visualization software, I was frustrated by the lack of quality data connectors for Apple Health data. Being so inspired, I waited an entire year to start HealthLens.  
+## Introduction
+
+<p align="center">
+<img width="330" alt="Application demonstration photo" src="https://github.com/user-attachments/assets/7f1ad680-f1fa-4023-a937-420f3307e62e"/>
+</p>
+
+<p align="center">
+    <i>HealthLens</i> is an open-source iOS application designed to be the missing "export" button for health-related data, offering data-obsessed users personalized analytics and visualization tools.
+</p>
+
+## Features
+
+- **Data Export**: Easily export your Apple Health data to common formats like CSV and XLSX.
+- **Personalized Analytics**: Analyze your health data with customizable visualizations.
+- **User-Friendly Design**: Intuitive interface for seamless data management and insights.
+- **Future-Proof**: Built with Swift Charts for future native visualizations.
+
+## Installation
+
+The recommended way to install **HealthLens** is through the [App Store](https://www.apple.com/app-store/).
+
+```
+# Coming soon to the App Store
+```
+
+## Local Development
+
+To develop HealthLens locally, you will need to clone and open this repository in Xcode.
+
+Once that's done, you can use the following commands to run the app locally:
+
+```bash
+git clone https://github.com/wkaisertexas/HealthLens
+cd HealthLens
+open HealthLens.xcodeproj
+```
+
+Ensure you have the necessary permissions for HealthKit and follow the Xcode prompts for local signing.
 
 ## Roadmap
 
-Apple Health is a data-warehouse for personal health information. However, the visualization and analysis tools provided are lackluster (at least for those as metric-obsessed as I). Health Lens seeks to facilitate the missing visualization and analysis layer for Apple Health.
+### Short-Term Goals
+- **Initial Release**: Basic export functionality for health data in CSV and XLSX formats.
+- **User Interface Improvements**: Enhance the UI for better user experience.
 
-Initially, Health Lens  will be simple export of health data to common formats like CSV and XLSX. However, great-support for native visualizations through products like [Swift Charts](https://developer.apple.com/documentation/charts) is a future goal. 
+### Long-Term Goals
+- **Advanced Visualizations**: Integrate Swift Charts for robust and interactive data visualizations.
+- **Data Analysis Showcase**: Provide meaningful health data analysis and insights within the app.
 
-In addition to being an iOS app, I will seek to showcase some analysis which I have found meaningful.
+## Contributing
 
-## ToDo List for Application Development
+We love our contributors! Here's how you can contribute:
 
-- [ ] Design an application icon
-- [ ] Write application copy for site
-- [ ] Use a nice-looking README template 
-- [ ] Make a design in Figma
-- [ ] Make a list of the available health metrics and export them
-- [ ] Build the design in Swift
-- [ ] Test the application with end-to-end testing in Swift
-- [ ] Setup CI / CD for Swift on GitHub
-- [ ] Apply for App Store approval
-- [ ] Design the App Store page for the project
-- [ ] Make a TikTok video on the app
-- [ ] Make the GitHub repository public 
+- [Open an issue](https://github.com/wkaisertexas/HealthLens/issues) if you believe you've encountered a bug.
+- Make a [pull request](https://github.com/wkaisertexas/HealthLens/pulls) to add new features, make quality-of-life improvements, or fix bugs.
 
-## Recourses Used
+<a href="https://github.com/wkaisertexas/healthlens/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=wkaisertexas/healthlens" />
+</a>
 
-- [Figma Design File](https://www.figma.com/design/2lkwgvRLecdSb1ZzTbCr7e/HealthLens)
+![Alt](https://repobeats.axiom.co/api/embed/83ed202554b095482847f899de57ba51a493842c.svg "Repobeats analytics image")
+
+## License
+
+HealthLens is open-source under the [MIT License](LICENSE.md).
+
+> If you liked this project, consider giving the repository a star ⭐️!
