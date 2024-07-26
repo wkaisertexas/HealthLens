@@ -320,8 +320,12 @@ class ContentViewModel: ObservableObject {
   /// Exports health data in an async function which can be exported to the transferable object w/ proper await support
   func asyncExportHealthData() async -> String {
     // analytics logging
-    logExportOccurred()
-      
+    Task.detached {
+      await MainActor.run { [weak self] in
+        if let self = self { self.logExportOccurred() }
+      }
+    }
+
     return await withUnsafeContinuation { continuation in
       exportHealthData(continuation: continuation)
     }
@@ -459,11 +463,33 @@ class ContentViewModel: ObservableObject {
 
           returnString += "\n\(startDate),\(unit.unitString),\(value)"
         } else {
-          // TODO: the quantityType is a measurement which is compatible with all sample types, so you could find the first order in a sorted list of types so that you can get the right type to actually explore the data
+          let fallbackUnits: [HKUnit] = [
+            .gram(), .ounce(), .pound(), .stone(),
+            .meter(), .inch(), .foot(), .mile(),
+            .liter(), .fluidOunceUS(), .fluidOunceImperial(), .pintUS(), .pintImperial(),
+            .second(), .minute(), .hour(), .day(),
+            .joule(), .kilocalorie(),
+            .degreeCelsius(), .degreeFahrenheit(), .kelvin(),
+            .siemen(),
+            .hertz(),
+            .volt(),
+            .watt(),
+            .radianAngle(), .degreeAngle(),
+            .lux(),
+          ]
 
-          // there are mass, length and energy formatter units which can form HKUnits. The only issues is that they are not caseiterable, so custom list must be defined ahead of time
+          if let fallbackUnit = fallbackUnits.first(where: {
+            newEntry.quantityType.is(compatibleWith: $0)
+          }) {
+            let value = newEntry.quantity.doubleValue(for: fallbackUnit)
+            let startDate = itemFormatter.string(from: entry.startDate)
 
-          logger.debug("No type is current present, skipping")
+            returnString += "\n\(startDate),\(fallbackUnit.unitString),\(value)"
+          } else {
+            logger.debug(
+              "No compatible unit found, skipping entry for quantity type: \(quantityType.identifier)"
+            )
+          }
         }
       }
     }
@@ -478,7 +504,7 @@ class ContentViewModel: ObservableObject {
   }
 
   /// Analytics reporting which may ask for a review if numbers are high enough
-  func logExportOccurred() {
+  @MainActor func logExportOccurred() {
     timesExported += 1
     categoriesExported += selectedQuantityTypes.count
 
@@ -488,9 +514,10 @@ class ContentViewModel: ObservableObject {
     {
       lastRequested = bundle
 
-      Task {
-        try await Task.sleep(for: .seconds(5))
-        await requestReview()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+        if let self = self {
+          self.requestReview()
+        }
       }
     }
   }
