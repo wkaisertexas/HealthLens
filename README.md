@@ -34,11 +34,11 @@
 
 ## Installation
 
-The recommended way to install **HealthLens** is through the [App Store](https://www.apple.com/app-store/).
+The recommended way to install **HealthLens** is through the [App Store](https://apps.apple.com/app/health-lens-csv-exporter/id6578440958).
 
-```
-# Coming soon to the App Store
-```
+<h3 align="center">
+  <a href="https://apps.apple.com/app/health-lens-csv-exporter/id6578440958">➡️ Click here to get <strong>Health Lens</strong> on the app store ⬅️</a>
+</h3>
 
 ## Local Development
 
