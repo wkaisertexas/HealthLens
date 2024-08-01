@@ -18,7 +18,10 @@
 ## Introduction
 
 <p align="center">
-<img width="330" alt="Application demonstration photo" src="https://github.com/user-attachments/assets/7f1ad680-f1fa-4023-a937-420f3307e62e"/>
+  <picture>
+    <source width="400" media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/184358fc-d604-4f4e-a278-dba377776ac0">
+    <img width="400" alt="Health Lens' homescreen" src="https://github.com/user-attachments/assets/7f1ad680-f1fa-4023-a937-420f3307e62e" />
+  </picture>
 </p>
 
 <p align="center">
