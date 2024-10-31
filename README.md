@@ -84,4 +84,5 @@ We love our contributors! Here's how you can contribute:
 
 HealthLens is open-source under the [MIT License](LICENSE.md).
 
+> [!IMPORTANT]
 > If you liked this project, consider giving the repository a star ⭐️!
