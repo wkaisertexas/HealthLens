@@ -39,10 +39,6 @@
 
 The recommended way to install **HealthLens** is through the [App Store](https://apps.apple.com/app/health-lens-csv-exporter/id6578440958).
 
-<h3 align="center">
-  <a href="https://apps.apple.com/app/health-lens-csv-exporter/id6578440958">➡️ Click here to get <strong>Health Lens</strong> on the app store ⬅️</a>
-</h3>
-
 ## Local Development
 
 To develop HealthLens locally, you will need to clone and open this repository in Xcode.
