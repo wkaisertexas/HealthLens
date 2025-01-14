@@ -417,9 +417,11 @@ class ContentViewModel: ObservableObject {
       // fetching in a dispatch group
       dispatchGroup.enter()
 
+      let dateRange = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
+        
       // calling the function
       let query = HKSampleQuery(
-        sampleType: quantityType, predicate: nil, limit: 1000, sortDescriptors: nil
+        sampleType: quantityType, predicate: dateRange, limit: 3000, sortDescriptors: nil
       ) { query, sample, error in
         if let error = error {
           logger.error("Failed to fetch data with error \(error)")
