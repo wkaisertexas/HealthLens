@@ -47,6 +47,27 @@ struct ContentView: View {
           }
         }
 
+        Section {
+          Button(action: {
+            contentViewModel.exportAllHealthData()
+          }) {
+            HStack {
+              Image(systemName: "square.and.arrow.up.on.square").foregroundColor(.blue)
+              Text("Export All Health Data")
+            }
+          }
+
+          Picker("Export Format", selection: $contentViewModel.selectedExportFormat) {
+            ForEach(ExportFormat.allCases, id: \.self) { format in
+              Text(format.rawValue.uppercased())
+            }
+          }.onChange(of: contentViewModel.selectedExportFormat) { _, newValue in
+            contentViewModel.onSelectedExportFormatChange(newValue)
+          }
+        } header: {
+          Text("Export All")
+        }
+
         // Date range selector
         Section {
           VStack {
@@ -85,22 +106,6 @@ struct ContentView: View {
                 }
               }
             }
-
-            //                        category.hasBoth ? Spacer() : nil
-            //
-            //                        ForEach(category.categories, id: \.self){ cat in
-            //                            Button(action: {
-            //                                withAnimation{
-            //                                    contentViewModel.toggleTypeIdentifier(cat)
-            //                                }
-            //                            }){
-            //                                HStack{
-            //                                    Text(contentViewModel.categoryMapping[cat]!)
-            //                                    Spacer()
-            //                                    contentViewModel.selectedQuantityTypes.contains(quant) ? Image(systemName: "checkmark").foregroundColor(.blue) : nil
-            //                                }
-            //                            }
-            //                        }
           }
         }
       }
@@ -113,8 +118,10 @@ struct ContentView: View {
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .automatic) {
+          //- NOTE: This is causing type-checking to fail here for some reason
+          
           ShareLink(
-            item: contentViewModel.shareTarget,
+            item: contentViewModel.exportFile,
             preview: SharePreview(
               "Exporting \(contentViewModel.makeSelectedStringDescription())")
           ).disabled(contentViewModel.selectedQuantityTypes.count == 0)

@@ -1,11 +1,39 @@
 import HealthKit
 import StoreKit
 import SwiftUI
+import libxlsxwriter
+
+let review_wait_time = 5  //< Wait time in seconds after export
+let export_count = 2  //< How many unique exports must be asked for before a review
+let categories_exported = 10  //< Categories exported before a review is asked for
+let defaultExportFormat: ExportFormat = .xlsx
 
 /// Contains all of the data to store the necessary health records
 class ContentViewModel: ObservableObject {
   private let healthStore = HKHealthStore()
   typealias ExportContinuation = UnsafeContinuation<String, Never>
+  
+  var headers: [String] {
+    return [
+      String(localized: "Date"),
+      String(localized: "Time"),
+      String(localized: "Unit"),
+      String(localized: "Value"),
+    ]
+  }
+  
+  
+  private let dateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter
+  }()
+
+  private let timeFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "HH:mm:ss"
+    return formatter
+  }()
 
   // -MARK: Stateful representations of the input form
   public var shareTarget: ExportFile
@@ -65,7 +93,13 @@ class ContentViewModel: ObservableObject {
     // symptomsGroup,
     vitalSignsGroup,
     otherGroup,
-    //        nutritionGroup,
+    respiratoryGroup,
+
+    // TODO: Add a way to export this commented out categories
+    // reproductiveHealthGroup,
+    // sleepGroup,
+    // symptomsGroup,
+    // nutritionGroup,
   ]
 
   public let quantityMapping: [HKQuantityTypeIdentifier: String] = [

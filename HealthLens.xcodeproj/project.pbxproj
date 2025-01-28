@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3E1EAE4D2D38155B00090EC5 /* Groups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1EAE4C2D38155600090EC5 /* Groups.swift */; };
+		3E1EAE532D381D1900090EC5 /* libxlsxwriter in Frameworks */ = {isa = PBXBuildFile; productRef = 3E1EAE522D381D1900090EC5 /* libxlsxwriter */; };
 		3E98758E2C46E5A300FD1CA5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E98758D2C46E5A300FD1CA5 /* Logger.swift */; };
 		3EA025C02C32FE7300EEC4C3 /* HealthLensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA025BF2C32FE7300EEC4C3 /* HealthLensApp.swift */; };
 		3EA025C22C32FE7300EEC4C3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA025C12C32FE7300EEC4C3 /* ContentView.swift */; };
@@ -39,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3E1EAE4C2D38155600090EC5 /* Groups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Groups.swift; sourceTree = "<group>"; };
 		3E98758D2C46E5A300FD1CA5 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		3EA025BC2C32FE7300EEC4C3 /* HealthLens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthLens.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3EA025BF2C32FE7300EEC4C3 /* HealthLensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthLensApp.swift; sourceTree = "<group>"; };
@@ -63,6 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3E1EAE532D381D1900090EC5 /* libxlsxwriter in Frameworks */,
 				3EF2608C2C448000001ABA12 /* HealthKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -108,6 +112,7 @@
 		3EA025BE2C32FE7300EEC4C3 /* HealthLens */ = {
 			isa = PBXGroup;
 			children = (
+				3E1EAE4C2D38155600090EC5 /* Groups.swift */,
 				3EF2608E2C4481A6001ABA12 /* HealthLens.entitlements */,
 				3EF2608D2C448056001ABA12 /* Info.plist */,
 				3EA025BF2C32FE7300EEC4C3 /* HealthLensApp.swift */,
@@ -169,6 +174,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				3E1EAE512D381CFA00090EC5 /* PBXTargetDependency */,
 			);
 			name = HealthLens;
 			productName = HealthLens;
@@ -243,6 +249,9 @@
 				Base,
 			);
 			mainGroup = 3EA025B32C32FE7300EEC4C3;
+			packageReferences = (
+				3E1EAE4B2D38148200090EC5 /* XCRemoteSwiftPackageReference "libxlsxwriter" */,
+			);
 			productRefGroup = 3EA025BD2C32FE7300EEC4C3 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -291,6 +300,7 @@
 				3EA025C22C32FE7300EEC4C3 /* ContentView.swift in Sources */,
 				3EF9FD132C498499000F4341 /* ExportFile.swift in Sources */,
 				3EA025C02C32FE7300EEC4C3 /* HealthLensApp.swift in Sources */,
+				3E1EAE4D2D38155B00090EC5 /* Groups.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -314,6 +324,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		3E1EAE512D381CFA00090EC5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 3E1EAE502D381CFA00090EC5 /* libxlsxwriter */;
+		};
 		3EA025D02C32FE7500EEC4C3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3EA025BB2C32FE7300EEC4C3 /* HealthLens */;
@@ -653,6 +667,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3E1EAE4B2D38148200090EC5 /* XCRemoteSwiftPackageReference "libxlsxwriter" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/jmcnamara/libxlsxwriter";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3E1EAE502D381CFA00090EC5 /* libxlsxwriter */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3E1EAE4B2D38148200090EC5 /* XCRemoteSwiftPackageReference "libxlsxwriter" */;
+			productName = libxlsxwriter;
+		};
+		3E1EAE522D381D1900090EC5 /* libxlsxwriter */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3E1EAE4B2D38148200090EC5 /* XCRemoteSwiftPackageReference "libxlsxwriter" */;
+			productName = libxlsxwriter;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3EA025B42C32FE7300EEC4C3 /* Project object */;
 }
