@@ -3,7 +3,6 @@ import StoreKit
 import SwiftUI
 import libxlsxwriter
 
-let review_wait_time = 5  //< Wait time in seconds after export
 let export_count = 2  //< How many unique exports must be asked for before a review
 let categories_exported = 10  //< Categories exported before a review is asked for
 let defaultExportFormat: ExportFormat = .xlsx
@@ -11,8 +10,10 @@ let defaultExportFormat: ExportFormat = .xlsx
 /// Contains all of the data to store the necessary health records
 class ContentViewModel: ObservableObject {
   private let healthStore = HKHealthStore()
-  typealias ExportContinuation = UnsafeContinuation<String, Never>
-  
+  typealias ExportContinuation = UnsafeContinuation<URL, Never>
+
+  @Published public var selectedExportFormat: ExportFormat = .csv
+
   var headers: [String] {
     return [
       String(localized: "Date"),
@@ -21,8 +22,7 @@ class ContentViewModel: ObservableObject {
       String(localized: "Value"),
     ]
   }
-  
-  
+
   private let dateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd"
@@ -36,7 +36,8 @@ class ContentViewModel: ObservableObject {
   }()
 
   // -MARK: Stateful representations of the input form
-  public var shareTarget: ExportFile
+  public var xlsxShareTarget: XLSXExportFile
+  public var csvShareTarget: CSVExportFile
 
   @Environment(\.requestReview) var requestReview
   @AppStorage("timesExported") public var timesExported = 0
@@ -61,10 +62,12 @@ class ContentViewModel: ObservableObject {
   }
 
   public init() {
-    // setting up share target
-    shareTarget = ExportFile()
-    shareTarget.collectData = asyncExportHealthData
-    shareTarget.fileName = suggestedFileName
+    // Setting up the two export files
+    xlsxShareTarget = XLSXExportFile()
+    csvShareTarget = CSVExportFile()
+
+    xlsxShareTarget.collectData = asyncExportHealthData
+    csvShareTarget.collectData = asyncExportHealthData
 
     // converting HKQuantityTypeIdentifier and HKCategoryTypeIdentifier to HKQuantityType and HKCategoryType
     quantityMapping.keys.forEach({
@@ -87,19 +90,35 @@ class ContentViewModel: ObservableObject {
     hearingHealthGroup,
     heartGroup,
     mobilityGroup,
-    //        reproductiveHealthGroup,
     respiratoryGroup,
-    //        sleepGroup,
-    // symptomsGroup,
     vitalSignsGroup,
     otherGroup,
     respiratoryGroup,
+
+    // reproductiveHealthGroup,
+    // sleepGroup,
+    // symptomsGroup,
 
     // TODO: Add a way to export this commented out categories
     // reproductiveHealthGroup,
     // sleepGroup,
     // symptomsGroup,
     // nutritionGroup,
+  ]
+
+  let fallbackUnits: [HKUnit] = [
+    .gram(), .ounce(), .pound(), .stone(),
+    .meter(), .inch(), .foot(), .mile(),
+    .liter(), .fluidOunceUS(), .fluidOunceImperial(), .pintUS(), .pintImperial(),
+    .second(), .minute(), .hour(), .day(),
+    .joule(), .kilocalorie(),
+    .degreeCelsius(), .degreeFahrenheit(), .kelvin(),
+    .siemen(),
+    .hertz(),
+    .volt(),
+    .watt(),
+    .radianAngle(), .degreeAngle(),
+    .lux(),
   ]
 
   public let quantityMapping: [HKQuantityTypeIdentifier: String] = [
@@ -352,7 +371,7 @@ class ContentViewModel: ObservableObject {
   }
 
   /// Exports health data in an async function which can be exported to the transferable object w/ proper await support
-  func asyncExportHealthData() async -> String {
+  func asyncExportHealthData() async -> URL {
     // analytics logging
     Task.detached {
       await MainActor.run { [weak self] in
@@ -425,16 +444,11 @@ class ContentViewModel: ObservableObject {
     healthStore.preferredUnits(for: generatedQuantityTypes) { (mapping, error) in
       if let error = error {
         logger.error("Failed to generate the preferred unit types \(error)")
-
-        // calling without a units mapping
-        self.fetchDataForCompletion(
-          continuation: continuation, generatedQuantityTypes: generatedQuantityTypes,
-          unitsMapping: [:])
-      } else {
-        self.fetchDataForCompletion(
-          continuation: continuation, generatedQuantityTypes: generatedQuantityTypes,
-          unitsMapping: mapping)
       }
+
+      self.fetchDataForCompletion(
+        continuation: continuation, generatedQuantityTypes: generatedQuantityTypes,
+        unitsMapping: mapping)
     }
   }
 
@@ -472,17 +486,26 @@ class ContentViewModel: ObservableObject {
     }
 
     dispatchGroup.notify(queue: .main) {
-      // we then need to convert it
-      self.makeCSVFromDictionaryToKeys(
-        resultsDictionary, continuation: continuation, unitsMapping: unitsMapping)
+      switch self.selectedExportFormat {
+      case .csv:
+        self.exportCSVData(
+          resultsDictionary, continuation: continuation, unitsMapping: unitsMapping)
+      case .xlsx:
+        self.exportELSXData(
+          resultsDictionary, continuation: continuation, unitsMapping: unitsMapping)
+      }
     }
   }
 
   /// Turns the results into a CSV list
-  func makeCSVFromDictionaryToKeys(
+  func exportCSVData(
     _ resultsDict: [HKObjectType: [HKSample]], continuation: ExportContinuation,
     unitsMapping: [HKObjectType: HKUnit]
   ) {
+    let uuid = UUID().uuidString
+    let fileName = "HealthData\(uuid).csv"
+    let fileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
+
     // getting the unit type mapping
     var returnString = "Date,Time,Unit,Value"
 
@@ -497,21 +520,6 @@ class ContentViewModel: ObservableObject {
 
           returnString += "\n\(startDate),\(unit.unitString),\(value)"
         } else {
-          let fallbackUnits: [HKUnit] = [
-            .gram(), .ounce(), .pound(), .stone(),
-            .meter(), .inch(), .foot(), .mile(),
-            .liter(), .fluidOunceUS(), .fluidOunceImperial(), .pintUS(), .pintImperial(),
-            .second(), .minute(), .hour(), .day(),
-            .joule(), .kilocalorie(),
-            .degreeCelsius(), .degreeFahrenheit(), .kelvin(),
-            .siemen(),
-            .hertz(),
-            .volt(),
-            .watt(),
-            .radianAngle(), .degreeAngle(),
-            .lux(),
-          ]
-
           if let fallbackUnit = fallbackUnits.first(where: {
             newEntry.quantityType.is(compatibleWith: $0)
           }) {
@@ -528,11 +536,92 @@ class ContentViewModel: ObservableObject {
       }
     }
 
-    // we need to return this string somehow to the user to make data out of it!
-    continuation.resume(returning: returnString)
+    do {
+      try returnString.write(to: fileURL, atomically: true, encoding: .utf8)
+      // Resume continuation with the file URL
+      continuation.resume(returning: fileURL)
+    } catch {
+      logger.error("Failed to write CSV data to file: \(error)")
+      // Resume continuation with a failure
+      //        continuation.resume(throwing: error)
+    }
   }
 
-  /// Makes a list of types selected to show for the user's summary
+  func exportELSXData(
+    _ resultsDict: [HKObjectType: [HKSample]], continuation: ExportContinuation,
+    unitsMapping: [HKObjectType: HKUnit]
+  ) {
+    let uuid = UUID().uuidString
+    let fileName = "HealthData\(uuid).xlsx"
+
+    // Make a fileName be random here a uuid
+    let filePath = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
+      .path
+
+    guard let workbook = workbook_new(filePath) else {
+      logger.error("Failed to create XLSX workbook at path: \(filePath)")
+      //        continuation.resume(returning: Data())
+      return
+    }
+
+    guard let worksheet = workbook_add_worksheet(workbook, nil) else {
+      logger.error("Failed to create XLSX worksheet.")
+      workbook_close(workbook)
+      //        continuation.resume(returning: Data())
+      return
+    }
+
+    for (colIndex, header) in headers.enumerated() {
+      worksheet_write_string(worksheet, 0, lxw_col_t(colIndex), header, nil)
+    }
+
+    var currentRow: lxw_row_t = 1
+
+    for (quantityType, samples) in resultsDict {
+      let preferredUnit = unitsMapping[quantityType]
+
+      for sample in samples {
+        guard let quantitySample = sample as? HKQuantitySample else { continue }
+
+        // format date and time
+        let dateString = dateFormatter.string(from: quantitySample.startDate)
+        let timeString = timeFormatter.string(from: quantitySample.startDate)
+
+        // Get the right unit to use per type
+        let unitToUse: HKUnit? =
+          preferredUnit
+          ?? fallbackUnits.first {
+            quantitySample.quantityType.is(compatibleWith: $0)
+          }
+
+        guard let finalUnit = unitToUse else {
+          logger.debug(
+            "No compatible unit found, skipping entry for type: \(quantityType.identifier)")
+          continue
+        }
+
+        // Get the unit's numeric value
+        let value = quantitySample.quantity.doubleValue(for: finalUnit)
+
+        // Write each column
+        worksheet_write_string(worksheet, currentRow, 0, dateString, nil)
+        worksheet_write_string(worksheet, currentRow, 1, timeString, nil)
+        worksheet_write_string(worksheet, currentRow, 2, finalUnit.unitString, nil)
+        worksheet_write_number(worksheet, currentRow, 3, value, nil)
+
+        currentRow += 1
+      }
+    }
+
+    // Finalizes the file by closing the workbook
+    workbook_close(workbook)
+
+    let fileURL = URL(fileURLWithPath: filePath)
+
+    continuation.resume(returning: fileURL)
+  }
+
+  /// Makes a comma separated list of selectedQuantityTypes
   public func makeSelectedStringDescription() -> String {
     return selectedQuantityTypes.map({ quantityMapping[$0]! }).sorted().joined(separator: ", ")
   }
@@ -543,7 +632,8 @@ class ContentViewModel: ObservableObject {
     categoriesExported += selectedQuantityTypes.count
 
     // decision point on whether or not to ask for a review
-    if timesExported >= 2 || categoriesExported >= 10, let bundle = Bundle.main.bundleIdentifier,
+    if timesExported >= export_count || categoriesExported >= categories_exported,
+      let bundle = Bundle.main.bundleIdentifier,
       lastRequested != bundle
     {
       lastRequested = bundle
@@ -555,179 +645,4 @@ class ContentViewModel: ObservableObject {
       }
     }
   }
-
-  /// Exporting condensed workout samples
-  /// source: https://developer.apple.com/documentation/healthkit/workouts_and_activity_rings/accessing_condensed_workout_samples
-  func exportCondensedWorkoutSamples() {
-    // this is a workout type which is pretty interesting tbh
-    let forWorkout = HKQuery.predicateForWorkoutActivities(workoutActivityType: .archery)
-    let heartRateType: HKSampleType = .workoutType()
-    //        let test = HKQuery.predicateForObjects(from: HKSource)
-    //        let heartRateDescriptor = HKQueryDescriptor(sampleType: forWorkout, predicate: forWorkout)
-    let heartRateDescriptor = HKQueryDescriptor(sampleType: heartRateType, predicate: forWorkout)
-
-    let heartRateQuery = HKSampleQuery(
-      queryDescriptors: [heartRateDescriptor], limit: HKObjectQueryNoLimit
-    ) { query, samples, error in
-
-    }
-  }
 }
-
-/// A `CategoryGroup` links together quantity and category types into an object used to represent a user interface menu
-struct CategoryGroup: Hashable {
-  let name: String
-  let quantities: [HKQuantityTypeIdentifier]
-  let categories: [HKCategoryTypeIdentifier]
-
-  var hasBoth: Bool {
-    quantities.count != 0 && categories.count != 0
-  }
-}
-
-let bodyMeasurementsGroup = CategoryGroup(
-  name: "Body Measurements",
-  quantities: [
-    .bodyMass, .bodyMassIndex, .leanBodyMass, .height, .waistCircumference, .bodyFatPercentage,
-    .electrodermalActivity,
-  ],
-  categories: []
-)
-
-let fitnessGroup = CategoryGroup(
-  name: "Fitness",
-  quantities: [
-    .activeEnergyBurned, .appleExerciseTime, .appleMoveTime, .appleStandTime, .basalEnergyBurned,
-    .cyclingCadence,
-    .cyclingFunctionalThresholdPower, .cyclingPower, .cyclingSpeed, .distanceCycling,
-    .distanceDownhillSnowSports,
-    .distanceSwimming, .distanceWalkingRunning, .distanceWheelchair, .flightsClimbed,
-    .physicalEffort, .pushCount,
-    .runningPower, .runningSpeed, .stepCount, .swimmingStrokeCount, .underwaterDepth,
-  ],
-  categories: []
-)
-
-let hearingHealthGroup = CategoryGroup(
-  name: "Hearing Health",
-  quantities: [
-    .environmentalAudioExposure, .environmentalSoundReduction, .headphoneAudioExposure,
-  ],
-  categories: [
-    .environmentalAudioExposureEvent, .headphoneAudioExposureEvent,
-  ]
-)
-
-let heartGroup = CategoryGroup(
-  name: "Heart",
-  quantities: [
-    .atrialFibrillationBurden, .heartRate, .heartRateRecoveryOneMinute, .heartRateVariabilitySDNN,
-    .peripheralPerfusionIndex,
-    .restingHeartRate, .vo2Max, .walkingHeartRateAverage,
-  ],
-  categories: [
-    .highHeartRateEvent, .irregularHeartRhythmEvent, .lowCardioFitnessEvent, .lowHeartRateEvent,
-  ]
-)
-
-let mobilityGroup = CategoryGroup(
-  name: "Mobility",
-  quantities: [
-    .appleWalkingSteadiness, .runningGroundContactTime, .runningStrideLength,
-    .runningVerticalOscillation,
-    .sixMinuteWalkTestDistance, .stairAscentSpeed, .stairDescentSpeed, .walkingAsymmetryPercentage,
-    .walkingDoubleSupportPercentage, .walkingSpeed, .walkingStepLength,
-  ],
-  categories: [
-    .appleWalkingSteadinessEvent
-  ]
-)
-
-let nutritionGroup = CategoryGroup(
-  name: "Nutrition",
-  quantities: [
-    .dietaryBiotin, .dietaryCaffeine, .dietaryCalcium, .dietaryCarbohydrates, .dietaryChloride,
-    .dietaryCholesterol,
-    .dietaryChromium, .dietaryCopper, .dietaryEnergyConsumed, .dietaryFatMonounsaturated,
-    .dietaryFatPolyunsaturated,
-    .dietaryFatSaturated, .dietaryFatTotal, .dietaryFiber, .dietaryFolate, .dietaryIodine,
-    .dietaryIron, .dietaryMagnesium,
-    .dietaryManganese, .dietaryMolybdenum, .dietaryNiacin, .dietaryPantothenicAcid,
-    .dietaryPhosphorus, .dietaryPotassium,
-    .dietaryProtein, .dietaryRiboflavin, .dietarySelenium, .dietarySodium, .dietarySugar,
-    .dietaryThiamin, .dietaryVitaminA,
-    .dietaryVitaminB12, .dietaryVitaminB6, .dietaryVitaminC, .dietaryVitaminD, .dietaryVitaminE,
-    .dietaryVitaminK, .dietaryWater,
-    .dietaryZinc,
-  ],
-  categories: []
-)
-
-let otherGroup = CategoryGroup(
-  name: "Other",
-  quantities: [
-    .bloodAlcoholContent, .bloodPressureDiastolic, .bloodPressureSystolic, .insulinDelivery,
-    .numberOfAlcoholicBeverages,
-    .numberOfTimesFallen, .timeInDaylight, .uvExposure, .waterTemperature,
-    .appleSleepingWristTemperature, .basalBodyTemperature,
-  ],
-  categories: [
-    .handwashingEvent, .toothbrushingEvent,
-  ]
-)
-
-let reproductiveHealthGroup = CategoryGroup(
-  name: "Reproductive Health",
-  quantities: [
-    //        .basalBodyTemperature
-  ],
-  categories: [
-    .cervicalMucusQuality, .contraceptive, .infrequentMenstrualCycles, .intermenstrualBleeding,
-    .irregularMenstrualCycles,
-    .lactation, .menstrualFlow, .ovulationTestResult, .persistentIntermenstrualBleeding, .pregnancy,
-    .pregnancyTestResult,
-    .progesteroneTestResult, .prolongedMenstrualPeriods, .sexualActivity,
-  ]
-)
-
-let respiratoryGroup = CategoryGroup(
-  name: "Respiratory",
-  quantities: [
-    .forcedExpiratoryVolume1, .forcedVitalCapacity, .inhalerUsage, .oxygenSaturation,
-    .peakExpiratoryFlowRate, .respiratoryRate,
-  ],
-  categories: []
-)
-
-let sleepGroup = CategoryGroup(
-  name: "Sleep",
-  quantities: [],
-  categories: [
-    .sleepAnalysis
-  ]
-)
-
-let symptomsGroup = CategoryGroup(
-  name: "Symptoms",
-  quantities: [],
-  categories: [
-    .abdominalCramps, .acne, .appetiteChanges, .bladderIncontinence, .bloating, .breastPain,
-    .chestTightnessOrPain,
-    .chills, .constipation, .coughing, .diarrhea, .dizziness, .drySkin, .fainting, .fatigue, .fever,
-    .generalizedBodyAche,
-    .hairLoss, .headache, .heartburn, .hotFlashes, .lossOfSmell, .lossOfTaste, .lowerBackPain,
-    .memoryLapse, .moodChanges,
-    .nausea, .nightSweats, .pelvicPain, .rapidPoundingOrFlutteringHeartbeat, .runnyNose,
-    .shortnessOfBreath,
-    .sinusCongestion, .skippedHeartbeat, .sleepChanges, .soreThroat, .vaginalDryness, .vomiting,
-    .wheezing,
-  ]
-)
-
-let vitalSignsGroup = CategoryGroup(
-  name: "Vital Signs",
-  quantities: [
-    .bloodGlucose, .bodyTemperature,
-  ],
-  categories: []
-)
