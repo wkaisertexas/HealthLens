@@ -5,9 +5,9 @@ import SwiftUI
 /// Represents the main content which is present in the application
 struct ContentView: View {
   @ObservedObject private var contentViewModel = ContentViewModel()
-  
+
   @Environment(\.requestReview) private var requestReview
-  
+
   var body: some View {
     NavigationStack {
       List {
@@ -19,15 +19,15 @@ struct ContentView: View {
       .navigationTitle(
         Text(
           contentViewModel.selectedQuantityTypes.count > 0
-          ? "Exporting \(contentViewModel.selectedQuantityTypes.count) item\(contentViewModel.selectedQuantityTypes.count == 1 ? "": "s")"
-          : "")
+            ? "Exporting \(contentViewModel.selectedQuantityTypes.count) item\(contentViewModel.selectedQuantityTypes.count == 1 ? "": "s")"
+            : "")
       )
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .automatic) {
           make_share_link()
         }
-        
+
         ToolbarItem(placement: .topBarLeading) {
           Button(action: {
             withAnimation {
@@ -42,7 +42,7 @@ struct ContentView: View {
       }
     }
   }
-  
+
   func createHeader() -> some View {
     Section {
       VStack {
@@ -51,7 +51,7 @@ struct ContentView: View {
         Text("Export your health data as a CSV").font(.subheadline).frame(
           maxWidth: .infinity, alignment: .leading)
       }
-      
+
       Link(
         destination: URL(
           string: "https://raw.githubusercontent.com/wkaisertexas/HealthLens/main/PRIVACY.md")!
@@ -62,7 +62,7 @@ struct ContentView: View {
           Text("Privacy Policy")
         }
       }
-      
+
       Link(destination: URL(string: "https://github.com/wkaisertexas/healthlens")!) {
         HStack {
           Image(systemName: "chevron.left.slash.chevron.right")
@@ -70,7 +70,7 @@ struct ContentView: View {
           Text("Contribute on GitHub")
         }
       }
-      
+
       Button(action: { requestReview() }) {
         HStack {
           Image(systemName: "star.fill")
@@ -80,12 +80,12 @@ struct ContentView: View {
       }
     }
   }
-  
+
   @ViewBuilder
   func make_share_link() -> some View {
-    let excelPreviewIcon  = Image("Excel")
+    let excelPreviewIcon = Image("Excel")
     let csvPreviewIcon = Image("CSV")
-    
+
     switch contentViewModel.selectedExportFormat {
     case .csv:
       ShareLink(
@@ -104,7 +104,7 @@ struct ContentView: View {
       ).disabled(contentViewModel.selectedQuantityTypes.count == 0)
     }
   }
-  
+
   func make_export_format() -> some View {
     Section {
       Picker("Export Format", selection: $contentViewModel.selectedExportFormat) {
@@ -116,7 +116,7 @@ struct ContentView: View {
       Text("Export Format")
     }
   }
-  
+
   func make_data_range_selector() -> some View {
     Section {
       VStack {
@@ -134,7 +134,7 @@ struct ContentView: View {
       Text("Export Range")
     }
   }
-  
+
   func make_groups_section() -> some View {
     ForEach(contentViewModel.categoryGroups, id: \.self) { category in
       Section(category.name) {
@@ -152,7 +152,7 @@ struct ContentView: View {
               Text(contentViewModel.quantityMapping[quant]!).foregroundStyle(Color.primary)
               Spacer()
               contentViewModel.selectedQuantityTypes.contains(quant)
-              ? Image(systemName: "checkmark").foregroundColor(.blue) : nil
+                ? Image(systemName: "checkmark").foregroundColor(.blue) : nil
             }
           }
         }

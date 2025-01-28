@@ -70,10 +70,10 @@ extension XLSXExportFile: Transferable {
   }
 
   /// Creates a data representation transfer which is setup as a comma separated text
-  static var transferRepresentation: some TransferRepresentation {    
+  static var transferRepresentation: some TransferRepresentation {
     FileRepresentation(exportedContentType: .xlsx) { object in
-          .init(await object.shareURL()!)
-      }.suggestedFileName { $0.fileName?() ?? "healthData.xlsx" }
-        .visibility(.all)
+      .init(await object.shareURL()!)
+    }.suggestedFileName { $0.fileName?() ?? "healthData.xlsx" }
+      .visibility(.all)
   }
 }
