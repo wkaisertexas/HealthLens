@@ -83,7 +83,8 @@ struct ContentView: View {
   
   @ViewBuilder
   func make_share_link() -> some View {
-    let previewIcon  = Image("Icon")
+    let excelPreviewIcon  = Image("Excel")
+    let csvPreviewIcon = Image("CSV")
     
     switch contentViewModel.selectedExportFormat {
     case .csv:
@@ -91,14 +92,14 @@ struct ContentView: View {
         item: contentViewModel.csvShareTarget,
         preview: SharePreview(
           "Exporting \(contentViewModel.makeSelectedStringDescription())",
-          icon: previewIcon)
+          icon: csvPreviewIcon)
       ).disabled(contentViewModel.selectedQuantityTypes.count == 0)
     case .xlsx:
       ShareLink(
         item: contentViewModel.xlsxShareTarget,
         preview: SharePreview(
           "Exporting \(contentViewModel.makeSelectedStringDescription())",
-          icon: previewIcon
+          icon: excelPreviewIcon
         )
       ).disabled(contentViewModel.selectedQuantityTypes.count == 0)
     }
