@@ -16,8 +16,7 @@ class ContentViewModel: ObservableObject {
 
   var headers: [String] {
     return [
-      String(localized: "Date"),
-      String(localized: "Time"),
+      String(localized: "DateTime"),
       String(localized: "Unit"),
       String(localized: "Value"),
     ]
@@ -119,225 +118,6 @@ class ContentViewModel: ObservableObject {
     .watt(),
     .radianAngle(), .degreeAngle(),
     .lux(),
-  ]
-
-  public let quantityMapping: [HKQuantityTypeIdentifier: String] = [
-    // Body Measurements
-    .bodyMass: "Weight",
-    .bodyMassIndex: "Body Mass Index (BMI)",
-    .leanBodyMass: "Lean Body Mass",
-    .height: "Height",
-    .waistCircumference: "Waist Circumference",
-    .bodyFatPercentage: "Body Fat Percentage",
-    .electrodermalActivity: "Electrodermal Activity",
-
-    // Fitness
-    .activeEnergyBurned: "Active Energy Burned",
-    .appleExerciseTime: "Exercise Time",
-    .appleMoveTime: "Move Time",
-    .appleStandTime: "Stand Time",
-    .basalEnergyBurned: "Basal Energy Burned",
-    .cyclingCadence: "Cycling Cadence",
-    .cyclingFunctionalThresholdPower: "Cycling Functional Threshold Power",
-    .cyclingPower: "Cycling Power",
-    .cyclingSpeed: "Cycling Speed",
-    .distanceCycling: "Distance Cycling",
-    .distanceDownhillSnowSports: "Distance Downhill Snow Sports",
-    .distanceSwimming: "Distance Swimming",
-    .distanceWalkingRunning: "Distance Walking/Running",
-    .distanceWheelchair: "Distance Wheelchair",
-    .flightsClimbed: "Flights Climbed",
-    .nikeFuel: "Nike Fuel",
-    .physicalEffort: "Physical Effort",
-    .pushCount: "Push Count",
-    .runningPower: "Running Power",
-    .runningSpeed: "Running Speed",
-    .stepCount: "Step Count",
-    .swimmingStrokeCount: "Swimming Stroke Count",
-    .underwaterDepth: "Underwater Depth",
-
-    // Hearing Health
-    .environmentalAudioExposure: "Environmental Audio Exposure",
-    .environmentalSoundReduction: "Environmental Sound Reduction",
-    .headphoneAudioExposure: "Headphone Audio Exposure",
-
-    // Heart
-    .atrialFibrillationBurden: "Atrial Fibrillation Burden",
-    .heartRate: "Heart Rate",
-    .heartRateRecoveryOneMinute: "Heart Rate Recovery (One Minute)",
-    .heartRateVariabilitySDNN: "Heart Rate Variability (SDNN)",
-    .peripheralPerfusionIndex: "Peripheral Perfusion Index",
-    .restingHeartRate: "Resting Heart Rate",
-    .vo2Max: "VO2 Max",
-    .walkingHeartRateAverage: "Walking Heart Rate Average",
-
-    // Mobility
-    .appleWalkingSteadiness: "Walking Steadiness",
-    .runningGroundContactTime: "Running Ground Contact Time",
-    .runningStrideLength: "Running Stride Length",
-    .runningVerticalOscillation: "Running Vertical Oscillation",
-    .sixMinuteWalkTestDistance: "Six-Minute Walk Test Distance",
-    .stairAscentSpeed: "Stair Ascent Speed",
-    .stairDescentSpeed: "Stair Descent Speed",
-    .walkingAsymmetryPercentage: "Walking Asymmetry Percentage",
-    .walkingDoubleSupportPercentage: "Walking Double Support Percentage",
-    .walkingSpeed: "Walking Speed",
-    .walkingStepLength: "Walking Step Length",
-
-    // Nutrition
-    .dietaryBiotin: "Dietary Biotin",
-    .dietaryCaffeine: "Dietary Caffeine",
-    .dietaryCalcium: "Dietary Calcium",
-    .dietaryCarbohydrates: "Dietary Carbohydrates",
-    .dietaryChloride: "Dietary Chloride",
-    .dietaryCholesterol: "Dietary Cholesterol",
-    .dietaryChromium: "Dietary Chromium",
-    .dietaryCopper: "Dietary Copper",
-    .dietaryEnergyConsumed: "Dietary Energy Consumed",
-    .dietaryFatMonounsaturated: "Dietary Fat (Monounsaturated)",
-    .dietaryFatPolyunsaturated: "Dietary Fat (Polyunsaturated)",
-    .dietaryFatSaturated: "Dietary Fat (Saturated)",
-    .dietaryFatTotal: "Dietary Fat (Total)",
-    .dietaryFiber: "Dietary Fiber",
-    .dietaryFolate: "Dietary Folate",
-    .dietaryIodine: "Dietary Iodine",
-    .dietaryIron: "Dietary Iron",
-    .dietaryMagnesium: "Dietary Magnesium",
-    .dietaryManganese: "Dietary Manganese",
-    .dietaryMolybdenum: "Dietary Molybdenum",
-    .dietaryNiacin: "Dietary Niacin",
-    .dietaryPantothenicAcid: "Dietary Pantothenic Acid",
-    .dietaryPhosphorus: "Dietary Phosphorus",
-    .dietaryPotassium: "Dietary Potassium",
-    .dietaryProtein: "Dietary Protein",
-    .dietaryRiboflavin: "Dietary Riboflavin",
-    .dietarySelenium: "Dietary Selenium",
-    .dietarySodium: "Dietary Sodium",
-    .dietarySugar: "Dietary Sugar",
-    .dietaryThiamin: "Dietary Thiamin",
-    .dietaryVitaminA: "Dietary Vitamin A",
-    .dietaryVitaminB12: "Dietary Vitamin B12",
-    .dietaryVitaminB6: "Dietary Vitamin B6",
-    .dietaryVitaminC: "Dietary Vitamin C",
-    .dietaryVitaminD: "Dietary Vitamin D",
-    .dietaryVitaminE: "Dietary Vitamin E",
-    .dietaryVitaminK: "Dietary Vitamin K",
-    .dietaryWater: "Dietary Water",
-    .dietaryZinc: "Dietary Zinc",
-
-    // Other
-    .bloodAlcoholContent: "Blood Alcohol Content",
-    .bloodPressureDiastolic: "Blood Pressure (Diastolic)",
-    .bloodPressureSystolic: "Blood Pressure (Systolic)",
-    .insulinDelivery: "Insulin Delivery",
-    .numberOfAlcoholicBeverages: "Number of Alcoholic Beverages",
-    .numberOfTimesFallen: "Number of Times Fallen",
-    .timeInDaylight: "Time in Daylight",
-    .uvExposure: "UV Exposure",
-    .waterTemperature: "Water Temperature",
-
-    // Reproductive Health
-    .basalBodyTemperature: "Basal Body Temperature",
-
-    // Respiratory
-    .forcedExpiratoryVolume1: "Forced Expiratory Volume (1 second)",
-    .forcedVitalCapacity: "Forced Vital Capacity",
-    .inhalerUsage: "Inhaler Usage",
-    .oxygenSaturation: "Oxygen Saturation",
-    .peakExpiratoryFlowRate: "Peak Expiratory Flow Rate",
-    .respiratoryRate: "Respiratory Rate",
-
-    // Vital Signs
-    .bloodGlucose: "Blood Glucose",
-    .bodyTemperature: "Body Temperature",
-
-    // Other recent identifiers
-    .appleSleepingWristTemperature: "Sleeping Wrist Temperature",
-  ]
-
-  public let categoryMapping: [HKCategoryTypeIdentifier: String] = [
-    // Stand Hour
-    .appleStandHour: "Stand Hour",
-
-    // Hearing Health
-    .environmentalAudioExposureEvent: "Environmental Audio Exposure Event",
-    .headphoneAudioExposureEvent: "Headphone Audio Exposure Event",
-
-    // Heart
-    .highHeartRateEvent: "High Heart Rate Event",
-    .irregularHeartRhythmEvent: "Irregular Heart Rhythm Event",
-    .lowCardioFitnessEvent: "Low Cardio Fitness Event",
-    .lowHeartRateEvent: "Low Heart Rate Event",
-
-    // Mindfulness
-    .mindfulSession: "Mindful Session",
-
-    // Mobility
-    .appleWalkingSteadinessEvent: "Walking Steadiness Event",
-
-    // Other
-    .handwashingEvent: "Handwashing Event",
-    .toothbrushingEvent: "Toothbrushing Event",
-
-    // Reproductive Health
-    .cervicalMucusQuality: "Cervical Mucus Quality",
-    .contraceptive: "Contraceptive",
-    .infrequentMenstrualCycles: "Infrequent Menstrual Cycles",
-    .intermenstrualBleeding: "Intermenstrual Bleeding",
-    .irregularMenstrualCycles: "Irregular Menstrual Cycles",
-    .lactation: "Lactation",
-    .menstrualFlow: "Menstrual Flow",
-    .ovulationTestResult: "Ovulation Test Result",
-    .persistentIntermenstrualBleeding: "Persistent Intermenstrual Bleeding",
-    .pregnancy: "Pregnancy",
-    .pregnancyTestResult: "Pregnancy Test Result",
-    .progesteroneTestResult: "Progesterone Test Result",
-    .prolongedMenstrualPeriods: "Prolonged Menstrual Periods",
-    .sexualActivity: "Sexual Activity",
-
-    // Sleep
-    .sleepAnalysis: "Sleep Analysis",
-
-    // Symptoms
-    .abdominalCramps: "Abdominal Cramps",
-    .acne: "Acne",
-    .appetiteChanges: "Appetite Changes",
-    .bladderIncontinence: "Bladder Incontinence",
-    .bloating: "Bloating",
-    .breastPain: "Breast Pain",
-    .chestTightnessOrPain: "Chest Tightness or Pain",
-    .chills: "Chills",
-    .constipation: "Constipation",
-    .coughing: "Coughing",
-    .diarrhea: "Diarrhea",
-    .dizziness: "Dizziness",
-    .drySkin: "Dry Skin",
-    .fainting: "Fainting",
-    .fatigue: "Fatigue",
-    .fever: "Fever",
-    .generalizedBodyAche: "Generalized Body Ache",
-    .hairLoss: "Hair Loss",
-    .headache: "Headache",
-    .heartburn: "Heartburn",
-    .hotFlashes: "Hot Flashes",
-    .lossOfSmell: "Loss of Smell",
-    .lossOfTaste: "Loss of Taste",
-    .lowerBackPain: "Lower Back Pain",
-    .memoryLapse: "Memory Lapse",
-    .moodChanges: "Mood Changes",
-    .nausea: "Nausea",
-    .nightSweats: "Night Sweats",
-    .pelvicPain: "Pelvic Pain",
-    .rapidPoundingOrFlutteringHeartbeat: "Rapid Pounding or Fluttering Heartbeat",
-    .runnyNose: "Runny Nose",
-    .shortnessOfBreath: "Shortness of Breath",
-    .sinusCongestion: "Sinus Congestion",
-    .skippedHeartbeat: "Skipped Heartbeat",
-    .sleepChanges: "Sleep Changes",
-    .soreThroat: "Sore Throat",
-    .vaginalDryness: "Vaginal Dryness",
-    .vomiting: "Vomiting",
-    .wheezing: "Wheezing",
   ]
 
   public var quantityTypes: [HKQuantityType] = []
@@ -602,8 +382,8 @@ class ContentViewModel: ObservableObject {
 
         // Get the unit's numeric value
         let value = quantitySample.quantity.doubleValue(for: finalUnit)
-
-        // Write each column
+        
+//        worksheet_write_unixtime(worksheet, currentRow, 0, Int64(quantitySample.startDate.timeIntervalSince1970), nil)
         worksheet_write_string(worksheet, currentRow, 0, dateString, nil)
         worksheet_write_string(worksheet, currentRow, 1, timeString, nil)
         worksheet_write_string(worksheet, currentRow, 2, finalUnit.unitString, nil)
@@ -645,4 +425,223 @@ class ContentViewModel: ObservableObject {
       }
     }
   }
+  
+  let quantityMapping: [HKQuantityTypeIdentifier: String] = [
+    // Body Measurements
+    .bodyMass: "Weight",
+    .bodyMassIndex: "Body Mass Index (BMI)",
+    .leanBodyMass: "Lean Body Mass",
+    .height: "Height",
+    .waistCircumference: "Waist Circumference",
+    .bodyFatPercentage: "Body Fat Percentage",
+    .electrodermalActivity: "Electrodermal Activity",
+
+    // Fitness
+    .activeEnergyBurned: "Active Energy Burned",
+    .appleExerciseTime: "Exercise Time",
+    .appleMoveTime: "Move Time",
+    .appleStandTime: "Stand Time",
+    .basalEnergyBurned: "Basal Energy Burned",
+    .cyclingCadence: "Cycling Cadence",
+    .cyclingFunctionalThresholdPower: "Cycling Functional Threshold Power",
+    .cyclingPower: "Cycling Power",
+    .cyclingSpeed: "Cycling Speed",
+    .distanceCycling: "Distance Cycling",
+    .distanceDownhillSnowSports: "Distance Downhill Snow Sports",
+    .distanceSwimming: "Distance Swimming",
+    .distanceWalkingRunning: "Distance Walking/Running",
+    .distanceWheelchair: "Distance Wheelchair",
+    .flightsClimbed: "Flights Climbed",
+    .nikeFuel: "Nike Fuel",
+    .physicalEffort: "Physical Effort",
+    .pushCount: "Push Count",
+    .runningPower: "Running Power",
+    .runningSpeed: "Running Speed",
+    .stepCount: "Step Count",
+    .swimmingStrokeCount: "Swimming Stroke Count",
+    .underwaterDepth: "Underwater Depth",
+
+    // Hearing Health
+    .environmentalAudioExposure: "Environmental Audio Exposure",
+    .environmentalSoundReduction: "Environmental Sound Reduction",
+    .headphoneAudioExposure: "Headphone Audio Exposure",
+
+    // Heart
+    .atrialFibrillationBurden: "Atrial Fibrillation Burden",
+    .heartRate: "Heart Rate",
+    .heartRateRecoveryOneMinute: "Heart Rate Recovery (One Minute)",
+    .heartRateVariabilitySDNN: "Heart Rate Variability (SDNN)",
+    .peripheralPerfusionIndex: "Peripheral Perfusion Index",
+    .restingHeartRate: "Resting Heart Rate",
+    .vo2Max: "VO2 Max",
+    .walkingHeartRateAverage: "Walking Heart Rate Average",
+
+    // Mobility
+    .appleWalkingSteadiness: "Walking Steadiness",
+    .runningGroundContactTime: "Running Ground Contact Time",
+    .runningStrideLength: "Running Stride Length",
+    .runningVerticalOscillation: "Running Vertical Oscillation",
+    .sixMinuteWalkTestDistance: "Six-Minute Walk Test Distance",
+    .stairAscentSpeed: "Stair Ascent Speed",
+    .stairDescentSpeed: "Stair Descent Speed",
+    .walkingAsymmetryPercentage: "Walking Asymmetry Percentage",
+    .walkingDoubleSupportPercentage: "Walking Double Support Percentage",
+    .walkingSpeed: "Walking Speed",
+    .walkingStepLength: "Walking Step Length",
+
+    // Nutrition
+    .dietaryBiotin: "Dietary Biotin",
+    .dietaryCaffeine: "Dietary Caffeine",
+    .dietaryCalcium: "Dietary Calcium",
+    .dietaryCarbohydrates: "Dietary Carbohydrates",
+    .dietaryChloride: "Dietary Chloride",
+    .dietaryCholesterol: "Dietary Cholesterol",
+    .dietaryChromium: "Dietary Chromium",
+    .dietaryCopper: "Dietary Copper",
+    .dietaryEnergyConsumed: "Dietary Energy Consumed",
+    .dietaryFatMonounsaturated: "Dietary Fat (Monounsaturated)",
+    .dietaryFatPolyunsaturated: "Dietary Fat (Polyunsaturated)",
+    .dietaryFatSaturated: "Dietary Fat (Saturated)",
+    .dietaryFatTotal: "Dietary Fat (Total)",
+    .dietaryFiber: "Dietary Fiber",
+    .dietaryFolate: "Dietary Folate",
+    .dietaryIodine: "Dietary Iodine",
+    .dietaryIron: "Dietary Iron",
+    .dietaryMagnesium: "Dietary Magnesium",
+    .dietaryManganese: "Dietary Manganese",
+    .dietaryMolybdenum: "Dietary Molybdenum",
+    .dietaryNiacin: "Dietary Niacin",
+    .dietaryPantothenicAcid: "Dietary Pantothenic Acid",
+    .dietaryPhosphorus: "Dietary Phosphorus",
+    .dietaryPotassium: "Dietary Potassium",
+    .dietaryProtein: "Dietary Protein",
+    .dietaryRiboflavin: "Dietary Riboflavin",
+    .dietarySelenium: "Dietary Selenium",
+    .dietarySodium: "Dietary Sodium",
+    .dietarySugar: "Dietary Sugar",
+    .dietaryThiamin: "Dietary Thiamin",
+    .dietaryVitaminA: "Dietary Vitamin A",
+    .dietaryVitaminB12: "Dietary Vitamin B12",
+    .dietaryVitaminB6: "Dietary Vitamin B6",
+    .dietaryVitaminC: "Dietary Vitamin C",
+    .dietaryVitaminD: "Dietary Vitamin D",
+    .dietaryVitaminE: "Dietary Vitamin E",
+    .dietaryVitaminK: "Dietary Vitamin K",
+    .dietaryWater: "Dietary Water",
+    .dietaryZinc: "Dietary Zinc",
+
+    // Other
+    .bloodAlcoholContent: "Blood Alcohol Content",
+    .bloodPressureDiastolic: "Blood Pressure (Diastolic)",
+    .bloodPressureSystolic: "Blood Pressure (Systolic)",
+    .insulinDelivery: "Insulin Delivery",
+    .numberOfAlcoholicBeverages: "Number of Alcoholic Beverages",
+    .numberOfTimesFallen: "Number of Times Fallen",
+    .timeInDaylight: "Time in Daylight",
+    .uvExposure: "UV Exposure",
+    .waterTemperature: "Water Temperature",
+
+    // Reproductive Health
+    .basalBodyTemperature: "Basal Body Temperature",
+
+    // Respiratory
+    .forcedExpiratoryVolume1: "Forced Expiratory Volume (1 second)",
+    .forcedVitalCapacity: "Forced Vital Capacity",
+    .inhalerUsage: "Inhaler Usage",
+    .oxygenSaturation: "Oxygen Saturation",
+    .peakExpiratoryFlowRate: "Peak Expiratory Flow Rate",
+    .respiratoryRate: "Respiratory Rate",
+
+    // Vital Signs
+    .bloodGlucose: "Blood Glucose",
+    .bodyTemperature: "Body Temperature",
+
+    // Other recent identifiers
+    .appleSleepingWristTemperature: "Sleeping Wrist Temperature",
+  ]
+
+  let categoryMapping: [HKCategoryTypeIdentifier: String] = [
+    // Stand Hour
+    .appleStandHour: "Stand Hour",
+
+    // Hearing Health
+    .environmentalAudioExposureEvent: "Environmental Audio Exposure Event",
+    .headphoneAudioExposureEvent: "Headphone Audio Exposure Event",
+
+    // Heart
+    .highHeartRateEvent: "High Heart Rate Event",
+    .irregularHeartRhythmEvent: "Irregular Heart Rhythm Event",
+    .lowCardioFitnessEvent: "Low Cardio Fitness Event",
+    .lowHeartRateEvent: "Low Heart Rate Event",
+
+    // Mindfulness
+    .mindfulSession: "Mindful Session",
+
+    // Mobility
+    .appleWalkingSteadinessEvent: "Walking Steadiness Event",
+
+    // Other
+    .handwashingEvent: "Handwashing Event",
+    .toothbrushingEvent: "Toothbrushing Event",
+
+    // Reproductive Health
+    .cervicalMucusQuality: "Cervical Mucus Quality",
+    .contraceptive: "Contraceptive",
+    .infrequentMenstrualCycles: "Infrequent Menstrual Cycles",
+    .intermenstrualBleeding: "Intermenstrual Bleeding",
+    .irregularMenstrualCycles: "Irregular Menstrual Cycles",
+    .lactation: "Lactation",
+    .menstrualFlow: "Menstrual Flow",
+    .ovulationTestResult: "Ovulation Test Result",
+    .persistentIntermenstrualBleeding: "Persistent Intermenstrual Bleeding",
+    .pregnancy: "Pregnancy",
+    .pregnancyTestResult: "Pregnancy Test Result",
+    .progesteroneTestResult: "Progesterone Test Result",
+    .prolongedMenstrualPeriods: "Prolonged Menstrual Periods",
+    .sexualActivity: "Sexual Activity",
+
+    // Sleep
+    .sleepAnalysis: "Sleep Analysis",
+
+    // Symptoms
+    .abdominalCramps: "Abdominal Cramps",
+    .acne: "Acne",
+    .appetiteChanges: "Appetite Changes",
+    .bladderIncontinence: "Bladder Incontinence",
+    .bloating: "Bloating",
+    .breastPain: "Breast Pain",
+    .chestTightnessOrPain: "Chest Tightness or Pain",
+    .chills: "Chills",
+    .constipation: "Constipation",
+    .coughing: "Coughing",
+    .diarrhea: "Diarrhea",
+    .dizziness: "Dizziness",
+    .drySkin: "Dry Skin",
+    .fainting: "Fainting",
+    .fatigue: "Fatigue",
+    .fever: "Fever",
+    .generalizedBodyAche: "Generalized Body Ache",
+    .hairLoss: "Hair Loss",
+    .headache: "Headache",
+    .heartburn: "Heartburn",
+    .hotFlashes: "Hot Flashes",
+    .lossOfSmell: "Loss of Smell",
+    .lossOfTaste: "Loss of Taste",
+    .lowerBackPain: "Lower Back Pain",
+    .memoryLapse: "Memory Lapse",
+    .moodChanges: "Mood Changes",
+    .nausea: "Nausea",
+    .nightSweats: "Night Sweats",
+    .pelvicPain: "Pelvic Pain",
+    .rapidPoundingOrFlutteringHeartbeat: "Rapid Pounding or Fluttering Heartbeat",
+    .runnyNose: "Runny Nose",
+    .shortnessOfBreath: "Shortness of Breath",
+    .sinusCongestion: "Sinus Congestion",
+    .skippedHeartbeat: "Skipped Heartbeat",
+    .sleepChanges: "Sleep Changes",
+    .soreThroat: "Sore Throat",
+    .vaginalDryness: "Vaginal Dryness",
+    .vomiting: "Vomiting",
+    .wheezing: "Wheezing",
+  ]
 }
