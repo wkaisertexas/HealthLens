@@ -5,7 +5,7 @@ import libxlsxwriter
 
 let export_count = 2  //< How many unique exports must be asked for before a review
 let categories_exported = 10  //< Categories exported before a review is asked for
-let time_difference_large_enough : TimeInterval = 1 * 24 * 60 * 60; //< 1 Day in seconds
+let time_difference_large_enough: TimeInterval = 1 * 24 * 60 * 60  //< 1 Day in seconds
 
 /// Contains all of the data to store the necessary health records
 class ContentViewModel: ObservableObject {
@@ -14,9 +14,18 @@ class ContentViewModel: ObservableObject {
 
   @Published public var selectedExportFormat: ExportFormat = .csv
 
-  var headers: [String] {
+  var xlsx_headers: [String] {
     return [
-      String(localized: "DateTime"),
+      String(localized: "Datetime"),
+      String(localized: "Category"),
+      String(localized: "Unit"),
+      String(localized: "Value"),
+    ]
+  }
+  var csv_headers: [String] {
+    return [
+      String(localized: "Datetime"),
+      String(localized: "Category"),
       String(localized: "Unit"),
       String(localized: "Value"),
     ]
@@ -33,7 +42,7 @@ class ContentViewModel: ObservableObject {
     formatter.dateFormat = "HH:mm:ss"
     return formatter
   }()
-  
+
   let itemFormatter: DateFormatter = {
     let formatter = DateFormatter()
 
@@ -258,7 +267,8 @@ class ContentViewModel: ObservableObject {
 
       // calling the function
       let query = HKSampleQuery(
-        sampleType: quantityType, predicate: make_date_range_predicate(), limit: 10_000, sortDescriptors: nil
+        sampleType: quantityType, predicate: make_date_range_predicate(), limit: 10_000,
+        sortDescriptors: nil
       ) { query, sample, error in
         if let error = error {
           logger.error("Failed to fetch data with error \(error)")
@@ -298,10 +308,12 @@ class ContentViewModel: ObservableObject {
     let fileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
 
     // getting the unit type mapping
-    var returnString = "Date,Time,Unit,Value"
+    var returnString = "Date,Quantity,Unit,Value"
 
     for quantityType in resultsDict.keys {
       let preferredUnit = unitsMapping[quantityType]
+      let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
+      let quantity_type_string = quantityMapping[quantity_type_id] ?? String(localized: "Unknown")
 
       for entry in resultsDict[quantityType] ?? [] {
         let newEntry = entry as! HKQuantitySample
@@ -309,20 +321,19 @@ class ContentViewModel: ObservableObject {
           let value = newEntry.quantity.doubleValue(for: unit)
           let startDate = itemFormatter.string(from: entry.startDate)
 
-          returnString += "\n\(startDate),\(unit.unitString),\(value)"
-        } else {
-          if let fallbackUnit = fallbackUnits.first(where: {
-            newEntry.quantityType.is(compatibleWith: $0)
-          }) {
-            let value = newEntry.quantity.doubleValue(for: fallbackUnit)
-            let startDate = itemFormatter.string(from: entry.startDate)
+          returnString += "\n\(startDate),\(quantity_type_string),\(unit.unitString),\(value)"
+        } else if let fallbackUnit = fallbackUnits.first(where: {
+          newEntry.quantityType.is(compatibleWith: $0)
+        }) {
+          let value = newEntry.quantity.doubleValue(for: fallbackUnit)
+          let startDate = itemFormatter.string(from: entry.startDate)
 
-            returnString += "\n\(startDate),\(fallbackUnit.unitString),\(value)"
-          } else {
-            logger.debug(
-              "No compatible unit found, skipping entry for quantity type: \(quantityType.identifier)"
-            )
-          }
+          returnString +=
+            "\n\(startDate),\(quantity_type_string),\(fallbackUnit.unitString),\(value)"
+        } else {
+          logger.debug(
+            "No compatible unit found, skipping entry for quantity type: \(quantityType.identifier)"
+          )
         }
       }
     }
@@ -362,21 +373,22 @@ class ContentViewModel: ObservableObject {
       return
     }
 
-    for (colIndex, header) in headers.enumerated() {
-      worksheet_write_string(worksheet, 0, lxw_col_t(colIndex), header, nil)
+    let header_format = workbook_add_format(workbook)
+    format_set_bold(header_format)
+
+    for (colIndex, header) in xlsx_headers.enumerated() {
+      worksheet_write_string(worksheet, 0, lxw_col_t(colIndex), header, header_format)
     }
 
     var currentRow: lxw_row_t = 1
 
     for (quantityType, samples) in resultsDict {
       let preferredUnit = unitsMapping[quantityType]
+      let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
+      let quantity_type_string = quantityMapping[quantity_type_id] ?? String(localized: "Unknown")
 
       for sample in samples {
         guard let quantitySample = sample as? HKQuantitySample else { continue }
-
-        // format date and time
-        let dateString = dateFormatter.string(from: quantitySample.startDate)
-        let timeString = timeFormatter.string(from: quantitySample.startDate)
 
         // Get the right unit to use per type
         let unitToUse: HKUnit? =
@@ -393,10 +405,10 @@ class ContentViewModel: ObservableObject {
 
         // Get the unit's numeric value
         let value = quantitySample.quantity.doubleValue(for: finalUnit)
-        
-//        worksheet_write_unixtime(worksheet, currentRow, 0, Int64(quantitySample.startDate.timeIntervalSince1970), nil)
-        worksheet_write_string(worksheet, currentRow, 0, dateString, nil)
-        worksheet_write_string(worksheet, currentRow, 1, timeString, nil)
+
+        worksheet_write_unixtime(
+          worksheet, currentRow, 0, Int64(quantitySample.startDate.timeIntervalSince1970), nil)
+        worksheet_write_string(worksheet, currentRow, 1, quantity_type_string, nil)
         worksheet_write_string(worksheet, currentRow, 2, finalUnit.unitString, nil)
         worksheet_write_number(worksheet, currentRow, 3, value, nil)
 
@@ -416,13 +428,13 @@ class ContentViewModel: ObservableObject {
   public func makeSelectedStringDescription() -> String {
     return selectedQuantityTypes.map({ quantityMapping[$0]! }).sorted().joined(separator: ", ")
   }
-  
+
   /// Makes a predicate only if the range is large enough
   public func make_date_range_predicate() -> NSPredicate? {
-    if(abs(endDate.timeIntervalSince(startDate)) <= time_difference_large_enough) {
+    if abs(endDate.timeIntervalSince(startDate)) <= time_difference_large_enough {
       return nil
     }
-    
+
     return HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
   }
 
@@ -445,7 +457,7 @@ class ContentViewModel: ObservableObject {
       }
     }
   }
-  
+
   let quantityMapping: [HKQuantityTypeIdentifier: String] = [
     // Body Measurements
     .bodyMass: "Weight",
