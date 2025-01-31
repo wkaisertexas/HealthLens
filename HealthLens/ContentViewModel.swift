@@ -6,6 +6,7 @@ import libxlsxwriter
 let export_count = 2  //< How many unique exports must be asked for before a review
 let categories_exported = 10  //< Categories exported before a review is asked for
 let time_difference_large_enough: TimeInterval = 1 * 24 * 60 * 60  //< 1 Day in seconds
+let sample_cap = 50_000  //< Max number of samples to export
 
 /// Contains all of the data to store the necessary health records
 class ContentViewModel: ObservableObject {
@@ -14,20 +15,25 @@ class ContentViewModel: ObservableObject {
 
   @Published public var selectedExportFormat: ExportFormat = .csv
 
+  let header_datetime = String(localized: "Datetime")
+  let header_category = String(localized: "Category")
+  let header_unit = String(localized: "Unit")
+  let header_value = String(localized: "Value")
+
   var xlsx_headers: [String] {
     return [
-      String(localized: "Datetime"),
-      String(localized: "Category"),
-      String(localized: "Unit"),
-      String(localized: "Value"),
+      header_datetime,
+      header_category,
+      header_unit,
+      header_value,
     ]
   }
   var csv_headers: [String] {
     return [
-      String(localized: "Datetime"),
-      String(localized: "Category"),
-      String(localized: "Unit"),
-      String(localized: "Value"),
+      header_datetime,
+      header_category,
+      header_unit,
+      header_value,
     ]
   }
 
@@ -45,7 +51,8 @@ class ContentViewModel: ObservableObject {
     let formatter = NumberFormatter()
 
     formatter.numberStyle = .decimal
-    formatter.maximumFractionDigits = 3
+    formatter.maximumFractionDigits = 2
+    formatter.minimumFractionDigits = 2
     formatter.locale = Locale.current
 
     return formatter
@@ -273,7 +280,7 @@ class ContentViewModel: ObservableObject {
 
       // calling the function
       let query = HKSampleQuery(
-        sampleType: quantityType, predicate: make_date_range_predicate(), limit: 10_000,
+        sampleType: quantityType, predicate: make_date_range_predicate(), limit: sample_cap,
         sortDescriptors: nil
       ) { query, sample, error in
         if let error = error {
@@ -328,8 +335,7 @@ class ContentViewModel: ObservableObject {
     let fileName = "HealthData\(uuid).csv"
     let fileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
 
-    // getting the unit type mapping
-    var returnString = "Date,Quantity,Unit,Value\n"
+    var returnString = "\(header_datetime),\(header_category),\(header_unit),\(header_value)"
 
     for quantityType in resultsDict.keys {
       let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
@@ -398,8 +404,30 @@ class ContentViewModel: ObservableObject {
       return
     }
 
+    // MARK: Formats
     let header_format = workbook_add_format(workbook)
     format_set_bold(header_format)
+
+    let datetime_format = workbook_add_format(workbook)
+    if let date_format_string = itemFormatter.dateFormat {
+      format_set_num_format(datetime_format, date_format_string)
+    } else {
+      logger.error("Failed to get date format string from localized date")
+      format_set_num_format(datetime_format, "yyyy-MM-dd HH:mm:ss")
+    }
+
+    let number_format = workbook_add_format(workbook)
+    if let number_format_string = numberFormatter.positiveFormat {
+      format_set_num_format(number_format, number_format_string)
+    } else {
+      format_set_num_format(number_format, "#,##0.00")
+    }
+
+    // Growing column width
+    worksheet_set_column_pixels(worksheet, 0, 0, 120, nil)
+    worksheet_set_column_pixels(worksheet, 1, 1, 80, nil)
+    worksheet_set_column_pixels(worksheet, 2, 2, 40, nil)
+    worksheet_set_column_pixels(worksheet, 3, 3, 80, nil)
 
     for (colIndex, header) in xlsx_headers.enumerated() {
       worksheet_write_string(worksheet, 0, lxw_col_t(colIndex), header, header_format)
@@ -432,10 +460,11 @@ class ContentViewModel: ObservableObject {
         let value = quantitySample.quantity.doubleValue(for: finalUnit)
 
         worksheet_write_unixtime(
-          worksheet, currentRow, 0, Int64(quantitySample.startDate.timeIntervalSince1970), nil)
+          worksheet, currentRow, 0, Int64(quantitySample.startDate.timeIntervalSince1970),
+          datetime_format)
         worksheet_write_string(worksheet, currentRow, 1, quantity_type_string, nil)
         worksheet_write_string(worksheet, currentRow, 2, finalUnit.unitString, nil)
-        worksheet_write_number(worksheet, currentRow, 3, value, nil)
+        worksheet_write_number(worksheet, currentRow, 3, value, number_format)
 
         currentRow += 1
       }
