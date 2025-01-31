@@ -267,7 +267,7 @@ class ContentViewModel: ObservableObject {
 
     var resultsDictionary: [HKObjectType: [HKSample]] = [:]
 
-    for quantityType in quantityTypes {
+    for quantityType in generatedQuantityTypes {
       // fetching in a dispatch group
       dispatchGroup.enter()
 
