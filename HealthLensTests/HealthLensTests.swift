@@ -13,15 +13,19 @@ final class HealthLensTests: XCTestCase {
   override func tearDownWithError() throws {
     // Put teardown code here. This method is called after the invocation of each test method in the class.
   }
-  
+
   func testCSVSanitization() throws {
     let viewModel = ContentViewModel()
-    
+
     let normal_string = "asdfabasdfasdf"
     let abnormal_string = "asdfabasdfasdf\n"
-    
-    XCTAssertEqual(viewModel.sanitizeForCSV(normal_string).count, normal_string.count, "sanitization should not have changed width")
-    XCTAssertNotEqual(viewModel.sanitizeForCSV(abnormal_string).count, abnormal_string.count, "width should have changed")
+
+    XCTAssertEqual(
+      viewModel.sanitizeForCSV(normal_string).count, normal_string.count,
+      "sanitization should not have changed width")
+    XCTAssertNotEqual(
+      viewModel.sanitizeForCSV(abnormal_string).count, abnormal_string.count,
+      "width should have changed")
   }
 
   func testPerformanceExample() throws {
