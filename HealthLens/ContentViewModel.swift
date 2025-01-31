@@ -31,19 +31,7 @@ class ContentViewModel: ObservableObject {
     ]
   }
 
-  private let dateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-    return formatter
-  }()
-
-  private let timeFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "HH:mm:ss"
-    return formatter
-  }()
-
-  let itemFormatter: DateFormatter = {
+  private let itemFormatter: DateFormatter = {
     let formatter = DateFormatter()
 
     formatter.dateStyle = .short
@@ -69,6 +57,10 @@ class ContentViewModel: ObservableObject {
   public var currentDate = Date()  // date is simply set to the current date without any changes
 
   public func suggestedFileName() -> String {
+    if selectedQuantityTypes.count  == total_exports{
+      return "all-health-data"
+    }
+    
     let result =
       selectedQuantityTypes
       .map { quantityMapping[$0]! }
@@ -76,7 +68,7 @@ class ContentViewModel: ObservableObject {
       .joined(separator: "-")
       .replacingOccurrences(of: " ", with: ".").lowercased()
 
-    return "\(result).csv"
+    return "\(result)"
   }
 
   public init() {
@@ -125,6 +117,10 @@ class ContentViewModel: ObservableObject {
     // symptomsGroup,
     // nutritionGroup,
   ]
+  
+  var total_exports: Int {
+    categoryGroups.map{$0.quantities.count + $0.categories.count}.reduce(0, +)
+  }
 
   let fallbackUnits: [HKUnit] = [
     .gram(), .ounce(), .pound(), .stone(),
