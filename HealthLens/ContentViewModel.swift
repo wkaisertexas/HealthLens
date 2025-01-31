@@ -158,7 +158,8 @@ class ContentViewModel: ObservableObject {
   public var categoryTypes: [HKCategoryType] = []
 
   // healthkit selected types
-  @Published public var selectedQuantityTypes: Set<HKQuantityTypeIdentifier> = []
+  @AppStorage("selectedQuantityTypes") public var selectedQuantityTypes:
+    Set<HKQuantityTypeIdentifier> = []
 
   // -MARK: User Interactions
 
@@ -730,4 +731,40 @@ class ContentViewModel: ObservableObject {
     .vomiting: "Vomiting",
     .wheezing: "Wheezing",
   ]
+}
+
+// MARK: Codable - RawRepresentable Set extensions to use @AppStorage with selectedQuantityTypes
+extension HKQuantityTypeIdentifier: Codable {
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    let rawValue = try container.decode(String.self)
+    // Attempt to rebuild the identifier from its string rawValue
+    self = HKQuantityTypeIdentifier(rawValue: rawValue)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    try container.encode(self.rawValue)
+  }
+}
+
+extension Set: @retroactive RawRepresentable where Element: Codable {
+  public init?(rawValue: String) {
+    guard let data = rawValue.data(using: .utf8),
+      let result = try? JSONDecoder().decode(Set<Element>.self, from: data)
+    else {
+      return nil
+    }
+    self = result
+  }
+
+  public var rawValue: String {
+    guard let data = try? JSONEncoder().encode(self),
+      let result = String(data: data, encoding: .utf8)
+    else {
+      // Fallback for encoding failure.
+      return "[]"
+    }
+    return result
+  }
 }
