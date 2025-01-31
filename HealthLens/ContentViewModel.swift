@@ -41,6 +41,16 @@ class ContentViewModel: ObservableObject {
     return formatter
   }()
 
+  private let numberFormatter: NumberFormatter = {
+    let formatter = NumberFormatter()
+
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = 3
+    formatter.locale = Locale.current
+
+    return formatter
+  }()
+
   // -MARK: Stateful representations of the input form
   public var xlsxShareTarget: XLSXExportFile
   public var csvShareTarget: CSVExportFile
@@ -57,10 +67,10 @@ class ContentViewModel: ObservableObject {
   public var currentDate = Date()  // date is simply set to the current date without any changes
 
   public func suggestedFileName() -> String {
-    if selectedQuantityTypes.count  == total_exports{
+    if selectedQuantityTypes.count == total_exports {
       return "all-health-data"
     }
-    
+
     let result =
       selectedQuantityTypes
       .map { quantityMapping[$0]! }
@@ -117,9 +127,9 @@ class ContentViewModel: ObservableObject {
     // symptomsGroup,
     // nutritionGroup,
   ]
-  
+
   var total_exports: Int {
-    categoryGroups.map{$0.quantities.count + $0.categories.count}.reduce(0, +)
+    categoryGroups.map { $0.quantities.count + $0.categories.count }.reduce(0, +)
   }
 
   let fallbackUnits: [HKUnit] = [
@@ -294,6 +304,21 @@ class ContentViewModel: ObservableObject {
     }
   }
 
+  /// Cleans up a csv string for santization
+  func sanitizeForCSV(_ input: String) -> String {
+    var sanitized = input
+
+    // Escape double quotes by replacing `"` with `""`
+    sanitized = sanitized.replacingOccurrences(of: "\"", with: "\"\"")
+
+    // If the string contains a comma, newline, or double quote, wrap it in quotes
+    if sanitized.contains(",") || sanitized.contains("\n") || sanitized.contains("\"") {
+      sanitized = "\"\(sanitized)\""
+    }
+
+    return sanitized
+  }
+
   /// Turns the results into a CSV list
   func exportCSVData(
     _ resultsDict: [HKObjectType: [HKSample]], continuation: ExportContinuation,
@@ -304,33 +329,37 @@ class ContentViewModel: ObservableObject {
     let fileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
 
     // getting the unit type mapping
-    var returnString = "Date,Quantity,Unit,Value"
+    var returnString = "Date,Quantity,Unit,Value\n"
 
     for quantityType in resultsDict.keys {
-      let preferredUnit = unitsMapping[quantityType]
       let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
-      let quantity_type_string = quantityMapping[quantity_type_id] ?? String(localized: "Unknown")
+      let quantity_type_string = sanitizeForCSV(
+        quantityMapping[quantity_type_id] ?? String(localized: "Unknown"))
 
       for entry in resultsDict[quantityType] ?? [] {
         let newEntry = entry as! HKQuantitySample
-        if let unit = preferredUnit {
-          let value = newEntry.quantity.doubleValue(for: unit)
-          let startDate = itemFormatter.string(from: entry.startDate)
 
-          returnString += "\n\(startDate),\(quantity_type_string),\(unit.unitString),\(value)"
-        } else if let fallbackUnit = fallbackUnits.first(where: {
-          newEntry.quantityType.is(compatibleWith: $0)
-        }) {
-          let value = newEntry.quantity.doubleValue(for: fallbackUnit)
-          let startDate = itemFormatter.string(from: entry.startDate)
+        var startDate = itemFormatter.string(from: entry.startDate)
+        startDate = sanitizeForCSV(startDate)
 
-          returnString +=
-            "\n\(startDate),\(quantity_type_string),\(fallbackUnit.unitString),\(value)"
-        } else {
+        guard
+          let unit = unitsMapping[quantityType]
+            ?? fallbackUnits.first(where: {
+              newEntry.quantityType.is(compatibleWith: $0)
+            })
+        else {
           logger.debug(
             "No compatible unit found, skipping entry for quantity type: \(quantityType.identifier)"
           )
+          continue
         }
+
+        let value_raw = newEntry.quantity.doubleValue(for: unit)
+        var value = numberFormatter.string(from: value_raw as NSNumber) ?? String(value_raw)
+
+        value = sanitizeForCSV(value)
+
+        returnString += "\(startDate),\(quantity_type_string),\(unit.unitString),\(value)\n"
       }
     }
 
