@@ -11,11 +11,13 @@ struct ContentView: View {
   var body: some View {
     NavigationStack {
       List {
-        createHeader()
-        make_export_format()
-        make_data_range_selector()
+        if contentViewModel.searchText.isEmpty {
+          above_the_fold()
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
         make_groups_section()
       }
+      .animation(.easeInOut, value: contentViewModel.searchText)
       .navigationTitle(
         Text(
           contentViewModel.selectedQuantityTypes.count > 0
@@ -39,8 +41,18 @@ struct ContentView: View {
           .accessibilityHint("Clear the selected HealthKit types")
           .disabled(contentViewModel.selectedQuantityTypes.count == 0)
         }
-      }
+      }.searchable(
+        text: $contentViewModel.searchText,
+        prompt: "Search Health Data"
+      )
     }
+  }
+
+  @ViewBuilder
+  func above_the_fold() -> some View {
+    createHeader()
+    make_export_format()
+    make_data_range_selector()
   }
 
   func createHeader() -> some View {
@@ -135,8 +147,19 @@ struct ContentView: View {
     }
   }
 
+  @ViewBuilder
   func make_groups_section() -> some View {
-    ForEach(contentViewModel.categoryGroups, id: \.self) { category in
+    let groups = contentViewModel.filteredCategoryGroups
+
+    groups.count == 0
+      ? Section {
+        Text("No results for \"\(contentViewModel.searchText)\"")
+          .font(.callout)
+          .foregroundColor(.secondary)
+          .padding(.vertical, 8)
+      } : nil
+
+    ForEach(contentViewModel.filteredCategoryGroups, id: \.self) { category in
       Section(category.name) {
         ForEach(
           category.quantities.sorted(by: {

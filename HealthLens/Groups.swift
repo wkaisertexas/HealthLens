@@ -1,7 +1,8 @@
 import HealthKit
 
 /// A `CategoryGroup` links together quantity and category types into an object used to represent a user interface menu
-struct CategoryGroup: Hashable {
+struct CategoryGroup: Identifiable, Hashable {
+  let id: UUID = UUID()  // prevents swiftui complaining about rending the same groups
   let name: String
   let quantities: [HKQuantityTypeIdentifier]
   let categories: [HKCategoryTypeIdentifier]

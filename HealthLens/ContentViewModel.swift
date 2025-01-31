@@ -13,6 +13,8 @@ class ContentViewModel: ObservableObject {
   private let healthStore = HKHealthStore()
   typealias ExportContinuation = UnsafeContinuation<URL, Never>
 
+  @Published public var searchText: String = ""
+
   @AppStorage("exportFormat") public var selectedExportFormat: ExportFormat = .csv
 
   let header_datetime = String(localized: "Datetime")
@@ -134,6 +136,29 @@ class ContentViewModel: ObservableObject {
     // symptomsGroup,
     // nutritionGroup,
   ]
+  var filteredCategoryGroups: [CategoryGroup] {
+    // return everything if empty
+    guard !searchText.isEmpty else {
+      return categoryGroups
+    }
+
+    let lowercasedSearch = searchText.lowercased()
+
+    // Filter
+    let filteredGroups = categoryGroups.map { group in
+      let filteredQuantities = group.quantities.filter { quantityIdentifier in
+        if let name = quantityMapping[quantityIdentifier] {
+          return name.lowercased().contains(lowercasedSearch)
+        }
+        return false
+      }
+
+      return CategoryGroup(name: group.name, quantities: filteredQuantities, categories: [])
+    }
+    .filter { !$0.quantities.isEmpty }  // need at least one match
+
+    return filteredGroups
+  }
 
   var total_exports: Int {
     categoryGroups.map { $0.quantities.count + $0.categories.count }.reduce(0, +)
