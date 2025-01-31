@@ -13,7 +13,7 @@ class ContentViewModel: ObservableObject {
   private let healthStore = HKHealthStore()
   typealias ExportContinuation = UnsafeContinuation<URL, Never>
 
-  @Published public var selectedExportFormat: ExportFormat = .csv
+  @AppStorage("exportFormat") public var selectedExportFormat: ExportFormat = .csv
 
   let header_datetime = String(localized: "Datetime")
   let header_category = String(localized: "Category")
