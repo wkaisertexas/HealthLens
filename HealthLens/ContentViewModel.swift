@@ -5,7 +5,7 @@ import libxlsxwriter
 
 let export_count = 2  //< How many unique exports must be asked for before a review
 let categories_exported = 10  //< Categories exported before a review is asked for
-let defaultExportFormat: ExportFormat = .xlsx
+let time_difference_large_enough : TimeInterval = 1 * 24 * 60 * 60; //< 1 Day in seconds
 
 /// Contains all of the data to store the necessary health records
 class ContentViewModel: ObservableObject {
@@ -31,6 +31,16 @@ class ContentViewModel: ObservableObject {
   private let timeFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.dateFormat = "HH:mm:ss"
+    return formatter
+  }()
+  
+  let itemFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+
+    formatter.dateStyle = .short
+    formatter.timeStyle = .short
+    formatter.locale = Locale.current
+
     return formatter
   }()
 
@@ -67,6 +77,8 @@ class ContentViewModel: ObservableObject {
 
     xlsxShareTarget.collectData = asyncExportHealthData
     csvShareTarget.collectData = asyncExportHealthData
+    xlsxShareTarget.fileName = suggestedFileName
+    csvShareTarget.fileName = suggestedFileName
 
     // converting HKQuantityTypeIdentifier and HKCategoryTypeIdentifier to HKQuantityType and HKCategoryType
     quantityMapping.keys.forEach({
@@ -172,7 +184,6 @@ class ContentViewModel: ObservableObject {
         HKObjectType.quantityType(forIdentifier: $0)!
       }))
 
-    // TODO: Make this to where isAuthorizedForTypes filters the type so you do not get prompted for something that you already have authorization
     if !isAuthorizedForTypes(generatedQuantityTypes) {
       healthStore.requestAuthorization(toShare: nil, read: generatedQuantityTypes) {
         (success, error) in
@@ -247,7 +258,7 @@ class ContentViewModel: ObservableObject {
 
       // calling the function
       let query = HKSampleQuery(
-        sampleType: quantityType, predicate: nil, limit: 1000, sortDescriptors: nil
+        sampleType: quantityType, predicate: make_date_range_predicate(), limit: 10_000, sortDescriptors: nil
       ) { query, sample, error in
         if let error = error {
           logger.error("Failed to fetch data with error \(error)")
@@ -404,6 +415,15 @@ class ContentViewModel: ObservableObject {
   /// Makes a comma separated list of selectedQuantityTypes
   public func makeSelectedStringDescription() -> String {
     return selectedQuantityTypes.map({ quantityMapping[$0]! }).sorted().joined(separator: ", ")
+  }
+  
+  /// Makes a predicate only if the range is large enough
+  public func make_date_range_predicate() -> NSPredicate? {
+    if(abs(endDate.timeIntervalSince(startDate)) <= time_difference_large_enough) {
+      return nil
+    }
+    
+    return HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
   }
 
   /// Analytics reporting which may ask for a review if numbers are high enough
