@@ -13,27 +13,15 @@ final class HealthLensTests: XCTestCase {
   override func tearDownWithError() throws {
     // Put teardown code here. This method is called after the invocation of each test method in the class.
   }
-
-  func testGeneratePreferredUnitType() async throws {
+  
+  func testCSVSanitization() throws {
     let viewModel = ContentViewModel()
-
-    // making a sample list of things
-    viewModel.selectedQuantityTypes = [
-      .activeEnergyBurned,
-      .appleMoveTime,
-      .appleStandTime,
-      .bodyMass,
-    ]
-
-    // note: I must be authorized to get the things
-    let prefferedTypes = try! await viewModel.getPreferredUnitType()
-
-    // check to make sure this is approximately the sample length
-    let beforeKeys = viewModel.selectedQuantityTypes.count
-    let afterKeys = prefferedTypes.count
-
-    // checks
-    XCTAssertEqual(beforeKeys, afterKeys, "There should be a preferred type for each key")
+    
+    let normal_string = "asdfabasdfasdf"
+    let abnormal_string = "asdfabasdfasdf\n"
+    
+    XCTAssertEqual(viewModel.sanitizeForCSV(normal_string).count, normal_string.count, "sanitization should not have changed width")
+    XCTAssertNotEqual(viewModel.sanitizeForCSV(abnormal_string).count, abnormal_string.count, "width should have changed")
   }
 
   func testPerformanceExample() throws {
