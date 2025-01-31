@@ -18,6 +18,7 @@
 		3EA025DD2C32FE7500EEC4C3 /* HealthLensUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA025DC2C32FE7500EEC4C3 /* HealthLensUITests.swift */; };
 		3EA025DF2C32FE7500EEC4C3 /* HealthLensUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA025DE2C32FE7500EEC4C3 /* HealthLensUITestsLaunchTests.swift */; };
 		3EDD0C5C2C4EB94000471A4A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3EDD0C5B2C4EB94000471A4A /* LaunchScreen.storyboard */; };
+		3EE9B02F2D4D827200EA7FC6 /* MarketingScreenShotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EE9B02E2D4D826A00EA7FC6 /* MarketingScreenShotView.swift */; };
 		3EF2608C2C448000001ABA12 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EF2608B2C447FFF001ABA12 /* HealthKit.framework */; };
 		3EF260902C457494001ABA12 /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF2608F2C457494001ABA12 /* ContentViewModel.swift */; };
 		3EF9FD132C498499000F4341 /* ExportFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF9FD122C498499000F4341 /* ExportFile.swift */; };
@@ -54,6 +55,7 @@
 		3EA025DC2C32FE7500EEC4C3 /* HealthLensUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthLensUITests.swift; sourceTree = "<group>"; };
 		3EA025DE2C32FE7500EEC4C3 /* HealthLensUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthLensUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		3EDD0C5B2C4EB94000471A4A /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		3EE9B02E2D4D826A00EA7FC6 /* MarketingScreenShotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketingScreenShotView.swift; sourceTree = "<group>"; };
 		3EF2608B2C447FFF001ABA12 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		3EF2608D2C448056001ABA12 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		3EF2608E2C4481A6001ABA12 /* HealthLens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HealthLens.entitlements; sourceTree = "<group>"; };
@@ -146,6 +148,7 @@
 		3EA025DB2C32FE7500EEC4C3 /* HealthLensUITests */ = {
 			isa = PBXGroup;
 			children = (
+				3EE9B02E2D4D826A00EA7FC6 /* MarketingScreenShotView.swift */,
 				3EA025DC2C32FE7500EEC4C3 /* HealthLensUITests.swift */,
 				3EA025DE2C32FE7500EEC4C3 /* HealthLensUITestsLaunchTests.swift */,
 			);
@@ -317,6 +320,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3EA025DF2C32FE7500EEC4C3 /* HealthLensUITestsLaunchTests.swift in Sources */,
+				3EE9B02F2D4D827200EA7FC6 /* MarketingScreenShotView.swift in Sources */,
 				3EA025DD2C32FE7500EEC4C3 /* HealthLensUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

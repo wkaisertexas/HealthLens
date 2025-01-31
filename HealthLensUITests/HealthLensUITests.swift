@@ -1,4 +1,5 @@
 import XCTest
+import SwiftUI
 
 final class HealthLensUITests: XCTestCase {
 
@@ -15,12 +16,26 @@ final class HealthLensUITests: XCTestCase {
     // Put teardown code here. This method is called after the invocation of each test method in the class.
   }
 
+  @MainActor
   func testExample() throws {
-    // UI tests must launch the application that they test.
+    
     let app = XCUIApplication()
+    app.launchEnvironment["UITestInterfaceStyle"] = "Light"
+    app.launchArguments.append("--uitesting-lightmode")
     app.launch()
 
-    // Use XCTAssert and related functions to verify your tests produce the correct results.
+    let screenshot = app.screenshot()
+    let marketingView = MarketingScreenshotView(screenshot: screenshot.image)
+    let renderer = ImageRenderer(content: marketingView)
+
+    renderer.scale = UIScreen.main.scale
+        
+    let attachment = XCTAttachment(image: renderer.uiImage!)
+
+    attachment.name = "MarketingScreenshot"
+    attachment.lifetime = .keepAlways
+
+    add(attachment)
   }
 
   func testLaunchPerformance() throws {
