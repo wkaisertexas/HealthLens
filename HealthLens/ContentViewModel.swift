@@ -397,7 +397,7 @@ class ContentViewModel: ObservableObject {
       return
     }
 
-    guard let worksheet = workbook_add_worksheet(workbook, nil) else {
+    guard let worksheet = workbook_add_worksheet(workbook, String(localized: "Data")) else {
       logger.error("Failed to create XLSX worksheet.")
       workbook_close(workbook)
       //        continuation.resume(returning: Data())
