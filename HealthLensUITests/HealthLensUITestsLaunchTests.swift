@@ -1,25 +1,40 @@
 import XCTest
 
 final class HealthLensUITestsLaunchTests: XCTestCase {
-
   override class var runsForEachTargetApplicationUIConfiguration: Bool {
-    true
+    return false
   }
 
   override func setUpWithError() throws {
     continueAfterFailure = false
   }
 
+  let locales = ["ar", "fr_FR", "es_ES"]
+
   func testLaunch() throws {
-    let app = XCUIApplication()
-    app.launch()
+    for locale in locales {
+      let app = XCUIApplication()
 
-    // Insert steps here to perform after app launch but before taking a screenshot,
-    // such as logging into a test account or navigating somewhere in the app
+      // 1) Set up the environment and arguments for the locale
+      // AppleLanguages is an array; AppleLocale is a single string
+      app.launchArguments += [
+        "-AppleLanguages", "(\(locale))",
+        "-AppleLocale", locale,
+      ]
+      // Optional: Set measurement units, temperature units, etc. if needed
+      // app.launchArguments += ["-AppleMeasurementUnits", "Centimeters", "-AppleTemperatureUnit", "Celsius"]
 
-    let attachment = XCTAttachment(screenshot: app.screenshot())
-    attachment.name = "Launch Screen"
-    attachment.lifetime = .keepAlways
-    add(attachment)
+      // Launch the app
+      app.launch()
+
+      // Screenshot + add it to the test result
+      let screenshot = app.screenshot()
+      let attachment = XCTAttachment(screenshot: screenshot)
+
+      attachment.name = "\(locale)-HomeScreen"
+      attachment.lifetime = .keepAlways
+
+      add(attachment)
+    }
   }
 }

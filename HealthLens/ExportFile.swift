@@ -1,47 +1,79 @@
 import CoreData
 import SwiftUI
+import UniformTypeIdentifiers
 
-/// `ExportFile` is a transferable class which allows an asynchronous operation to generate a file on button click.
-///
-/// It turns out that this is better, because you are able to export the file and then you need to request permissions.
-///
-/// from: https://stackoverflow.com/questions/76527347/how-to-use-sharelink-with-an-item-from-an-async-function
-struct ExportFile {
-  typealias FileExportType = () async -> String?
+enum ExportFormat: String, CaseIterable {
+  case csv
+  case xlsx
+}
+
+struct CSVExportFile {
+  typealias FileExportType = () async -> URL?
   typealias FileType = () -> String
   public var collectData: FileExportType?
   public var fileName: FileType?
-
-  func exportData() async -> String? {
-    guard let collectData = collectData, let returnData = await collectData() else {
-      logger.error("Failed to return collected data")
-      return nil
-    }
-
-    return returnData
-  }
-
-  func shareURL() async -> Data? {
-    guard let shortURL = await exportData() else {
-      return "example.com".data(using: .utf8)
-    }
-    return shortURL.data(using: .utf8)
-  }
 }
 
-extension ExportFile: Transferable {
+extension CSVExportFile: Transferable {
   enum ShareError: Error {
     case failed
   }
 
+  func shareURL() async -> URL? {
+    guard let collectData = collectData else {
+      return nil
+    }
+
+    guard let result = await collectData() else {
+      return nil
+    }
+
+    return result
+  }
+
+  static var transferRepresentation: some TransferRepresentation {
+    FileRepresentation(exportedContentType: .commaSeparatedText) { object in
+      .init(await object.shareURL()!)
+    }.suggestedFileName { $0.fileName?() ?? "healthData" }
+      .visibility(.all)
+  }
+}
+
+struct XLSXExportFile {
+  typealias FileExportType = () async -> URL?
+  typealias FileType = () -> String
+  public var collectData: FileExportType?
+  public var fileName: FileType?
+}
+
+extension UTType {
+  static let xlsx =
+    UTType("org.openxmlformats.spreadsheetml.sheet")
+    ?? .spreadsheet
+}
+
+extension XLSXExportFile: Transferable {
+  enum ShareError: Error {
+    case failed
+  }
+
+  func shareURL() async -> URL? {
+    guard let collectData = collectData else {
+      return nil
+    }
+
+    guard let result = await collectData() else {
+      return nil
+    }
+
+    return result
+  }
+
   /// Creates a data representation transfer which is setup as a comma separated text
   static var transferRepresentation: some TransferRepresentation {
-    DataRepresentation(exportedContentType: .commaSeparatedText) { object in
-      guard let data = await object.shareURL() else {
-        throw ShareError.failed
-      }
-      return data
-    }
-    .suggestedFileName { $0.fileName?() ?? "healthData.csv" }
+    FileRepresentation(exportedContentType: .xlsx) { object in
+      .init(await object.shareURL()!)
+    }.suggestedFileName { $0.fileName?() ?? "healthData.xlsx" }
+      .visibility(.all)
   }
 }

@@ -1,14 +1,68 @@
 import HealthKit
 import StoreKit
 import SwiftUI
+import libxlsxwriter
+
+let export_count = 2  //< How many unique exports must be asked for before a review
+let categories_exported = 10  //< Categories exported before a review is asked for
+let time_difference_large_enough: TimeInterval = 1 * 24 * 60 * 60  //< 1 Day in seconds
+let sample_cap = 50_000  //< Max number of samples to export
 
 /// Contains all of the data to store the necessary health records
 class ContentViewModel: ObservableObject {
   private let healthStore = HKHealthStore()
-  typealias ExportContinuation = UnsafeContinuation<String, Never>
+  typealias ExportContinuation = UnsafeContinuation<URL, Never>
+
+  @Published public var searchText: String = ""
+
+  @AppStorage("exportFormat") public var selectedExportFormat: ExportFormat = .csv
+
+  let header_datetime = String(localized: "Datetime")
+  let header_category = String(localized: "Category")
+  let header_unit = String(localized: "Unit")
+  let header_value = String(localized: "Value")
+
+  var xlsx_headers: [String] {
+    return [
+      header_datetime,
+      header_category,
+      header_unit,
+      header_value,
+    ]
+  }
+  var csv_headers: [String] {
+    return [
+      header_datetime,
+      header_category,
+      header_unit,
+      header_value,
+    ]
+  }
+
+  private let itemFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+
+    formatter.dateStyle = .short
+    formatter.timeStyle = .short
+    formatter.locale = Locale.current
+
+    return formatter
+  }()
+
+  private let numberFormatter: NumberFormatter = {
+    let formatter = NumberFormatter()
+
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = 2
+    formatter.minimumFractionDigits = 2
+    formatter.locale = Locale.current
+
+    return formatter
+  }()
 
   // -MARK: Stateful representations of the input form
-  public var shareTarget: ExportFile
+  public var xlsxShareTarget: XLSXExportFile
+  public var csvShareTarget: CSVExportFile
 
   @Environment(\.requestReview) var requestReview
   @AppStorage("timesExported") public var timesExported = 0
@@ -22,6 +76,10 @@ class ContentViewModel: ObservableObject {
   public var currentDate = Date()  // date is simply set to the current date without any changes
 
   public func suggestedFileName() -> String {
+    if selectedQuantityTypes.count == total_exports {
+      return "all-health-data"
+    }
+
     let result =
       selectedQuantityTypes
       .map { quantityMapping[$0]! }
@@ -29,14 +87,18 @@ class ContentViewModel: ObservableObject {
       .joined(separator: "-")
       .replacingOccurrences(of: " ", with: ".").lowercased()
 
-    return "\(result).csv"
+    return "\(result)"
   }
 
   public init() {
-    // setting up share target
-    shareTarget = ExportFile()
-    shareTarget.collectData = asyncExportHealthData
-    shareTarget.fileName = suggestedFileName
+    // Setting up the two export files
+    xlsxShareTarget = XLSXExportFile()
+    csvShareTarget = CSVExportFile()
+
+    xlsxShareTarget.collectData = asyncExportHealthData
+    csvShareTarget.collectData = asyncExportHealthData
+    xlsxShareTarget.fileName = suggestedFileName
+    csvShareTarget.fileName = suggestedFileName
 
     // converting HKQuantityTypeIdentifier and HKCategoryTypeIdentifier to HKQuantityType and HKCategoryType
     quantityMapping.keys.forEach({
@@ -59,16 +121,424 @@ class ContentViewModel: ObservableObject {
     hearingHealthGroup,
     heartGroup,
     mobilityGroup,
-    //        reproductiveHealthGroup,
     respiratoryGroup,
-    //        sleepGroup,
-    // symptomsGroup,
     vitalSignsGroup,
     otherGroup,
-    //        nutritionGroup,
+    respiratoryGroup,
+
+    // reproductiveHealthGroup,
+    // sleepGroup,
+    // symptomsGroup,
+
+    // TODO: Add a way to export this commented out categories
+    // reproductiveHealthGroup,
+    // sleepGroup,
+    // symptomsGroup,
+    // nutritionGroup,
+  ]
+  var filteredCategoryGroups: [CategoryGroup] {
+    // return everything if empty
+    guard !searchText.isEmpty else {
+      return categoryGroups
+    }
+
+    let lowercasedSearch = searchText.lowercased()
+
+    // Filter
+    let filteredGroups = categoryGroups.map { group in
+      let filteredQuantities = group.quantities.filter { quantityIdentifier in
+        if let name = quantityMapping[quantityIdentifier] {
+          return name.lowercased().contains(lowercasedSearch)
+        }
+        return false
+      }
+
+      return CategoryGroup(name: group.name, quantities: filteredQuantities, categories: [])
+    }
+    .filter { !$0.quantities.isEmpty }  // need at least one match
+
+    return filteredGroups
+  }
+
+  var total_exports: Int {
+    categoryGroups.map { $0.quantities.count + $0.categories.count }.reduce(0, +)
+  }
+
+  let fallbackUnits: [HKUnit] = [
+    .gram(), .ounce(), .pound(), .stone(),
+    .meter(), .inch(), .foot(), .mile(),
+    .liter(), .fluidOunceUS(), .fluidOunceImperial(), .pintUS(), .pintImperial(),
+    .second(), .minute(), .hour(), .day(),
+    .joule(), .kilocalorie(),
+    .degreeCelsius(), .degreeFahrenheit(), .kelvin(),
+    .siemen(),
+    .hertz(),
+    .volt(),
+    .watt(),
+    .radianAngle(), .degreeAngle(),
+    .lux(),
   ]
 
-  public let quantityMapping: [HKQuantityTypeIdentifier: String] = [
+  public var quantityTypes: [HKQuantityType] = []
+  public var categoryTypes: [HKCategoryType] = []
+
+  // healthkit selected types
+  @AppStorage("selectedQuantityTypes") public var selectedQuantityTypes:
+    Set<HKQuantityTypeIdentifier> = []
+
+  // -MARK: User Interactions
+
+  /// Selects the `HKQuantityTypeIdentifier`
+  func toggleTypeIdentifier(_ identifier: HKQuantityTypeIdentifier) {
+    if selectedQuantityTypes.contains(identifier) {
+      selectedQuantityTypes.remove(identifier)
+    } else {
+      selectedQuantityTypes.insert(identifier)
+    }
+  }
+
+  /// Clears the export queue
+  func clearExportQueue() {
+    selectedQuantityTypes.removeAll()
+  }
+
+  // -MARK: Intents
+
+  /// Allows a date range to selected
+  func dateSelectClicked() {
+    logger.debug("Clicked the date select")
+    dateSelectorEnabled.toggle()
+  }
+
+  /// Exports health data in an async function which can be exported to the transferable object w/ proper await support
+  func asyncExportHealthData() async -> URL {
+    // analytics logging
+    Task.detached {
+      await MainActor.run { [weak self] in
+        if let self = self { self.logExportOccurred() }
+      }
+    }
+
+    return await withUnsafeContinuation { continuation in
+      exportHealthData(continuation: continuation)
+    }
+  }
+
+  /// Exports health data to the share sheet
+  func exportHealthData(continuation: ExportContinuation) {
+    // Converts the selected quantity types
+    let generatedQuantityTypes: Set<HKObjectType> = Set(
+      selectedQuantityTypes.map({
+        HKObjectType.quantityType(forIdentifier: $0)!
+      }))
+
+    if !isAuthorizedForTypes(generatedQuantityTypes) {
+      healthStore.requestAuthorization(toShare: nil, read: generatedQuantityTypes) {
+        (success, error) in
+        guard success else {
+          logger.error("Failed w/ error \(error)")
+          return
+        }
+
+        // queries data from HealthKit
+        self.makeAuthorizedQueryToHealthKit(continuation)
+      }
+    } else {
+      // queries data from HealthKit
+      makeAuthorizedQueryToHealthKit(continuation)
+    }
+  }
+
+  /// Check if we need authorization for a given set of object types
+  func isAuthorizedForTypes(_ generatedQuantityTypes: Set<HKObjectType>) -> Bool {
+    var isAuthorized = true
+    for quantityType in generatedQuantityTypes {
+      switch healthStore.authorizationStatus(for: quantityType) {
+      case .notDetermined, .sharingDenied:
+        isAuthorized = false
+        break
+      default:
+        continue
+      }
+    }
+
+    return isAuthorized
+  }
+
+  /// Makes a query to `HealthKit`
+  func makeAuthorizedQueryToHealthKit(_ continuation: ExportContinuation) {
+    // Ensure we have authorization to read health data
+    guard HKHealthStore.isHealthDataAvailable() else {
+      logger.error("Health data is not available")
+      return
+    }
+
+    // we have authorization for exporting health data, we need ot do it
+    let generatedQuantityTypes: Set<HKQuantityType> = Set(
+      selectedQuantityTypes.map({
+        HKQuantityType.quantityType(forIdentifier: $0)!
+      }))
+
+    // getting the prefered units
+    healthStore.preferredUnits(for: generatedQuantityTypes) { (mapping, error) in
+      if let error = error {
+        logger.error("Failed to generate the preferred unit types \(error)")
+      }
+
+      self.fetchDataForCompletion(
+        continuation: continuation, generatedQuantityTypes: generatedQuantityTypes,
+        unitsMapping: mapping)
+    }
+  }
+
+  /// Gets the data for each type
+  func fetchDataForCompletion(
+    continuation: ExportContinuation, generatedQuantityTypes: Set<HKQuantityType>,
+    unitsMapping: [HKObjectType: HKUnit]
+  ) {
+    let dispatchGroup = DispatchGroup()
+
+    var resultsDictionary: [HKObjectType: [HKSample]] = [:]
+
+    for quantityType in generatedQuantityTypes {
+      // fetching in a dispatch group
+      dispatchGroup.enter()
+
+      // calling the function
+      let query = HKSampleQuery(
+        sampleType: quantityType, predicate: make_date_range_predicate(), limit: sample_cap,
+        sortDescriptors: nil
+      ) { query, sample, error in
+        if let error = error {
+          logger.error("Failed to fetch data with error \(error)")
+          dispatchGroup.leave()
+          return
+        }
+
+        if let sample = sample {
+          resultsDictionary[quantityType] = sample
+        }
+
+        dispatchGroup.leave()
+      }
+
+      healthStore.execute(query)
+    }
+
+    dispatchGroup.notify(queue: .main) {
+      switch self.selectedExportFormat {
+      case .csv:
+        self.exportCSVData(
+          resultsDictionary, continuation: continuation, unitsMapping: unitsMapping)
+      case .xlsx:
+        self.exportELSXData(
+          resultsDictionary, continuation: continuation, unitsMapping: unitsMapping)
+      }
+    }
+  }
+
+  /// Cleans up a csv string for santization
+  func sanitizeForCSV(_ input: String) -> String {
+    var sanitized = input
+
+    // Escape double quotes by replacing `"` with `""`
+    sanitized = sanitized.replacingOccurrences(of: "\"", with: "\"\"")
+
+    // If the string contains a comma, newline, or double quote, wrap it in quotes
+    if sanitized.contains(",") || sanitized.contains("\n") || sanitized.contains("\"") {
+      sanitized = "\"\(sanitized)\""
+    }
+
+    return sanitized
+  }
+
+  /// Turns the results into a CSV list
+  func exportCSVData(
+    _ resultsDict: [HKObjectType: [HKSample]], continuation: ExportContinuation,
+    unitsMapping: [HKObjectType: HKUnit]
+  ) {
+    let uuid = UUID().uuidString
+    let fileName = "HealthData\(uuid).csv"
+    let fileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
+
+    var returnString = "\(header_datetime),\(header_category),\(header_unit),\(header_value)"
+
+    for quantityType in resultsDict.keys {
+      let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
+      let quantity_type_string = sanitizeForCSV(
+        quantityMapping[quantity_type_id] ?? String(localized: "Unknown"))
+
+      for entry in resultsDict[quantityType] ?? [] {
+        let newEntry = entry as! HKQuantitySample
+
+        var startDate = itemFormatter.string(from: entry.startDate)
+        startDate = sanitizeForCSV(startDate)
+
+        guard
+          let unit = unitsMapping[quantityType]
+            ?? fallbackUnits.first(where: {
+              newEntry.quantityType.is(compatibleWith: $0)
+            })
+        else {
+          logger.debug(
+            "No compatible unit found, skipping entry for quantity type: \(quantityType.identifier)"
+          )
+          continue
+        }
+
+        let value_raw = newEntry.quantity.doubleValue(for: unit)
+        var value = numberFormatter.string(from: value_raw as NSNumber) ?? String(value_raw)
+
+        value = sanitizeForCSV(value)
+
+        returnString += "\(startDate),\(quantity_type_string),\(unit.unitString),\(value)\n"
+      }
+    }
+
+    do {
+      try returnString.write(to: fileURL, atomically: true, encoding: .utf8)
+      // Resume continuation with the file URL
+      continuation.resume(returning: fileURL)
+    } catch {
+      logger.error("Failed to write CSV data to file: \(error)")
+      // Resume continuation with a failure
+      //        continuation.resume(throwing: error)
+    }
+  }
+
+  func exportELSXData(
+    _ resultsDict: [HKObjectType: [HKSample]], continuation: ExportContinuation,
+    unitsMapping: [HKObjectType: HKUnit]
+  ) {
+    let uuid = UUID().uuidString
+    let fileName = "HealthData\(uuid).xlsx"
+
+    // Make a fileName be random here a uuid
+    let filePath = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
+      .path
+
+    guard let workbook = workbook_new(filePath) else {
+      logger.error("Failed to create XLSX workbook at path: \(filePath)")
+      //        continuation.resume(returning: Data())
+      return
+    }
+
+    guard let worksheet = workbook_add_worksheet(workbook, String(localized: "Data")) else {
+      logger.error("Failed to create XLSX worksheet.")
+      workbook_close(workbook)
+      //        continuation.resume(returning: Data())
+      return
+    }
+
+    // MARK: Formats
+    let header_format = workbook_add_format(workbook)
+    format_set_bold(header_format)
+
+    let datetime_format = workbook_add_format(workbook)
+    if let date_format_string = itemFormatter.dateFormat {
+      format_set_num_format(datetime_format, date_format_string)
+    } else {
+      logger.error("Failed to get date format string from localized date")
+      format_set_num_format(datetime_format, "yyyy-MM-dd HH:mm:ss")
+    }
+
+    let number_format = workbook_add_format(workbook)
+    if let number_format_string = numberFormatter.positiveFormat {
+      format_set_num_format(number_format, number_format_string)
+    } else {
+      format_set_num_format(number_format, "#,##0.00")
+    }
+
+    // Growing column width
+    worksheet_set_column_pixels(worksheet, 0, 0, 120, nil)
+    worksheet_set_column_pixels(worksheet, 1, 1, 80, nil)
+    worksheet_set_column_pixels(worksheet, 2, 2, 40, nil)
+    worksheet_set_column_pixels(worksheet, 3, 3, 80, nil)
+
+    for (colIndex, header) in xlsx_headers.enumerated() {
+      worksheet_write_string(worksheet, 0, lxw_col_t(colIndex), header, header_format)
+    }
+
+    var currentRow: lxw_row_t = 1
+
+    for (quantityType, samples) in resultsDict {
+      let preferredUnit = unitsMapping[quantityType]
+      let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
+      let quantity_type_string = quantityMapping[quantity_type_id] ?? String(localized: "Unknown")
+
+      for sample in samples {
+        guard let quantitySample = sample as? HKQuantitySample else { continue }
+
+        // Get the right unit to use per type
+        let unitToUse: HKUnit? =
+          preferredUnit
+          ?? fallbackUnits.first {
+            quantitySample.quantityType.is(compatibleWith: $0)
+          }
+
+        guard let finalUnit = unitToUse else {
+          logger.debug(
+            "No compatible unit found, skipping entry for type: \(quantityType.identifier)")
+          continue
+        }
+
+        // Get the unit's numeric value
+        let value = quantitySample.quantity.doubleValue(for: finalUnit)
+
+        worksheet_write_unixtime(
+          worksheet, currentRow, 0, Int64(quantitySample.startDate.timeIntervalSince1970),
+          datetime_format)
+        worksheet_write_string(worksheet, currentRow, 1, quantity_type_string, nil)
+        worksheet_write_string(worksheet, currentRow, 2, finalUnit.unitString, nil)
+        worksheet_write_number(worksheet, currentRow, 3, value, number_format)
+
+        currentRow += 1
+      }
+    }
+
+    // Finalizes the file by closing the workbook
+    workbook_close(workbook)
+
+    let fileURL = URL(fileURLWithPath: filePath)
+
+    continuation.resume(returning: fileURL)
+  }
+
+  /// Makes a comma separated list of selectedQuantityTypes
+  public func makeSelectedStringDescription() -> String {
+    return selectedQuantityTypes.map({ quantityMapping[$0]! }).sorted().joined(separator: ", ")
+  }
+
+  /// Makes a predicate only if the range is large enough
+  public func make_date_range_predicate() -> NSPredicate? {
+    if abs(endDate.timeIntervalSince(startDate)) <= time_difference_large_enough {
+      return nil
+    }
+
+    return HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
+  }
+
+  /// Analytics reporting which may ask for a review if numbers are high enough
+  @MainActor func logExportOccurred() {
+    timesExported += 1
+    categoriesExported += selectedQuantityTypes.count
+
+    // decision point on whether or not to ask for a review
+    if timesExported >= export_count || categoriesExported >= categories_exported,
+      let bundle = Bundle.main.bundleIdentifier,
+      lastRequested != bundle
+    {
+      lastRequested = bundle
+
+      DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+        if let self = self {
+          self.requestReview()
+        }
+      }
+    }
+  }
+
+  let quantityMapping: [HKQuantityTypeIdentifier: String] = [
     // Body Measurements
     .bodyMass: "Weight",
     .bodyMassIndex: "Body Mass Index (BMI)",
@@ -202,7 +672,7 @@ class ContentViewModel: ObservableObject {
     .appleSleepingWristTemperature: "Sleeping Wrist Temperature",
   ]
 
-  public let categoryMapping: [HKCategoryTypeIdentifier: String] = [
+  let categoryMapping: [HKCategoryTypeIdentifier: String] = [
     // Stand Hour
     .appleStandHour: "Stand Hour",
 
@@ -286,416 +756,40 @@ class ContentViewModel: ObservableObject {
     .vomiting: "Vomiting",
     .wheezing: "Wheezing",
   ]
+}
 
-  public var quantityTypes: [HKQuantityType] = []
-  public var categoryTypes: [HKCategoryType] = []
-
-  // healthkit selected types
-  @Published public var selectedQuantityTypes: Set<HKQuantityTypeIdentifier> = []
-
-  // -MARK: User Interactions
-
-  /// Selects the `HKQuantityTypeIdentifier`
-  func toggleTypeIdentifier(_ identifier: HKQuantityTypeIdentifier) {
-    if selectedQuantityTypes.contains(identifier) {
-      selectedQuantityTypes.remove(identifier)
-    } else {
-      selectedQuantityTypes.insert(identifier)
-    }
+// MARK: Codable - RawRepresentable Set extensions to use @AppStorage with selectedQuantityTypes
+extension HKQuantityTypeIdentifier: Codable {
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    let rawValue = try container.decode(String.self)
+    // Attempt to rebuild the identifier from its string rawValue
+    self = HKQuantityTypeIdentifier(rawValue: rawValue)
   }
 
-  /// Clears the export queue
-  func clearExportQueue() {
-    selectedQuantityTypes.removeAll()
-  }
-
-  // -MARK: Intents
-
-  /// Allows a date range to selected
-  func dateSelectClicked() {
-    logger.debug("Clicked the date select")
-    dateSelectorEnabled.toggle()
-  }
-
-  /// Exports health data in an async function which can be exported to the transferable object w/ proper await support
-  func asyncExportHealthData() async -> String {
-    // analytics logging
-    Task.detached {
-      await MainActor.run { [weak self] in
-        if let self = self { self.logExportOccurred() }
-      }
-    }
-
-    return await withUnsafeContinuation { continuation in
-      exportHealthData(continuation: continuation)
-    }
-  }
-
-  /// Exports health data to the share sheet
-  func exportHealthData(continuation: ExportContinuation) {
-    // Converts the selected quantity types
-    let generatedQuantityTypes: Set<HKObjectType> = Set(
-      selectedQuantityTypes.map({
-        HKObjectType.quantityType(forIdentifier: $0)!
-      }))
-
-    // TODO: Make this to where isAuthorizedForTypes filters the type so you do not get prompted for something that you already have authorization
-    if !isAuthorizedForTypes(generatedQuantityTypes) {
-      healthStore.requestAuthorization(toShare: nil, read: generatedQuantityTypes) {
-        (success, error) in
-        guard success else {
-          logger.error("Failed w/ error \(error)")
-          return
-        }
-
-        // queries data from HealthKit
-        self.makeAuthorizedQueryToHealthKit(continuation)
-      }
-    } else {
-      // queries data from HealthKit
-      makeAuthorizedQueryToHealthKit(continuation)
-    }
-  }
-
-  /// Check if we need authorization for a given set of object types
-  func isAuthorizedForTypes(_ generatedQuantityTypes: Set<HKObjectType>) -> Bool {
-    var isAuthorized = true
-    for quantityType in generatedQuantityTypes {
-      switch healthStore.authorizationStatus(for: quantityType) {
-      case .notDetermined, .sharingDenied:
-        isAuthorized = false
-        break
-      default:
-        continue
-      }
-    }
-
-    return isAuthorized
-  }
-
-  /// Makes a query to `HealthKit`
-  func makeAuthorizedQueryToHealthKit(_ continuation: ExportContinuation) {
-    // Ensure we have authorization to read health data
-    guard HKHealthStore.isHealthDataAvailable() else {
-      logger.error("Health data is not available")
-      return
-    }
-
-    // we have authorization for exporting health data, we need ot do it
-    let generatedQuantityTypes: Set<HKQuantityType> = Set(
-      selectedQuantityTypes.map({
-        HKQuantityType.quantityType(forIdentifier: $0)!
-      }))
-
-    // getting the prefered units
-    healthStore.preferredUnits(for: generatedQuantityTypes) { (mapping, error) in
-      if let error = error {
-        logger.error("Failed to generate the preferred unit types \(error)")
-
-        // calling without a units mapping
-        self.fetchDataForCompletion(
-          continuation: continuation, generatedQuantityTypes: generatedQuantityTypes,
-          unitsMapping: [:])
-      } else {
-        self.fetchDataForCompletion(
-          continuation: continuation, generatedQuantityTypes: generatedQuantityTypes,
-          unitsMapping: mapping)
-      }
-    }
-  }
-
-  /// Gets the data for each type
-  func fetchDataForCompletion(
-    continuation: ExportContinuation, generatedQuantityTypes: Set<HKQuantityType>,
-    unitsMapping: [HKObjectType: HKUnit]
-  ) {
-    let dispatchGroup = DispatchGroup()
-
-    var resultsDictionary: [HKObjectType: [HKSample]] = [:]
-
-    for quantityType in quantityTypes {
-      // fetching in a dispatch group
-      dispatchGroup.enter()
-
-      let dateRange = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
-        
-      // calling the function
-      let query = HKSampleQuery(
-        sampleType: quantityType, predicate: dateRange, limit: 3000, sortDescriptors: nil
-      ) { query, sample, error in
-        if let error = error {
-          logger.error("Failed to fetch data with error \(error)")
-          dispatchGroup.leave()
-          return
-        }
-
-        if let sample = sample {
-          resultsDictionary[quantityType] = sample
-        }
-
-        dispatchGroup.leave()
-      }
-
-      healthStore.execute(query)
-    }
-
-    dispatchGroup.notify(queue: .main) {
-      // we then need to convert it
-      self.makeCSVFromDictionaryToKeys(
-        resultsDictionary, continuation: continuation, unitsMapping: unitsMapping)
-    }
-  }
-
-  /// Turns the results into a CSV list
-  func makeCSVFromDictionaryToKeys(
-    _ resultsDict: [HKObjectType: [HKSample]], continuation: ExportContinuation,
-    unitsMapping: [HKObjectType: HKUnit]
-  ) {
-    // getting the unit type mapping
-    var returnString = "Date,Time,Unit,Value"
-
-    for quantityType in resultsDict.keys {
-      let preferredUnit = unitsMapping[quantityType]
-
-      for entry in resultsDict[quantityType] ?? [] {
-        let newEntry = entry as! HKQuantitySample
-        if let unit = preferredUnit {
-          let value = newEntry.quantity.doubleValue(for: unit)
-          let startDate = itemFormatter.string(from: entry.startDate)
-
-          returnString += "\n\(startDate),\(unit.unitString),\(value)"
-        } else {
-          let fallbackUnits: [HKUnit] = [
-            .gram(), .ounce(), .pound(), .stone(),
-            .meter(), .inch(), .foot(), .mile(),
-            .liter(), .fluidOunceUS(), .fluidOunceImperial(), .pintUS(), .pintImperial(),
-            .second(), .minute(), .hour(), .day(),
-            .joule(), .kilocalorie(),
-            .degreeCelsius(), .degreeFahrenheit(), .kelvin(),
-            .siemen(),
-            .hertz(),
-            .volt(),
-            .watt(),
-            .radianAngle(), .degreeAngle(),
-            .lux(),
-          ]
-
-          if let fallbackUnit = fallbackUnits.first(where: {
-            newEntry.quantityType.is(compatibleWith: $0)
-          }) {
-            let value = newEntry.quantity.doubleValue(for: fallbackUnit)
-            let startDate = itemFormatter.string(from: entry.startDate)
-
-            returnString += "\n\(startDate),\(fallbackUnit.unitString),\(value)"
-          } else {
-            logger.debug(
-              "No compatible unit found, skipping entry for quantity type: \(quantityType.identifier)"
-            )
-          }
-        }
-      }
-    }
-
-    // we need to return this string somehow to the user to make data out of it!
-    continuation.resume(returning: returnString)
-  }
-
-  /// Makes a list of types selected to show for the user's summary
-  public func makeSelectedStringDescription() -> String {
-    return selectedQuantityTypes.map({ quantityMapping[$0]! }).sorted().joined(separator: ", ")
-  }
-
-  /// Analytics reporting which may ask for a review if numbers are high enough
-  @MainActor func logExportOccurred() {
-    timesExported += 1
-    categoriesExported += selectedQuantityTypes.count
-
-    // decision point on whether or not to ask for a review
-    if timesExported >= 2 || categoriesExported >= 10, let bundle = Bundle.main.bundleIdentifier,
-      lastRequested != bundle
-    {
-      lastRequested = bundle
-
-      DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-        if let self = self {
-          self.requestReview()
-        }
-      }
-    }
-  }
-
-  /// Exporting condensed workout samples
-  /// source: https://developer.apple.com/documentation/healthkit/workouts_and_activity_rings/accessing_condensed_workout_samples
-  func exportCondensedWorkoutSamples() {
-    // this is a workout type which is pretty interesting tbh
-    let forWorkout = HKQuery.predicateForWorkoutActivities(workoutActivityType: .archery)
-    let heartRateType: HKSampleType = .workoutType()
-    //        let test = HKQuery.predicateForObjects(from: HKSource)
-    //        let heartRateDescriptor = HKQueryDescriptor(sampleType: forWorkout, predicate: forWorkout)
-    let heartRateDescriptor = HKQueryDescriptor(sampleType: heartRateType, predicate: forWorkout)
-
-    let heartRateQuery = HKSampleQuery(
-      queryDescriptors: [heartRateDescriptor], limit: HKObjectQueryNoLimit
-    ) { query, samples, error in
-
-    }
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    try container.encode(self.rawValue)
   }
 }
 
-/// A `CategoryGroup` links together quantity and category types into an object used to represent a user interface menu
-struct CategoryGroup: Hashable {
-  let name: String
-  let quantities: [HKQuantityTypeIdentifier]
-  let categories: [HKCategoryTypeIdentifier]
+extension Set: @retroactive RawRepresentable where Element: Codable {
+  public init?(rawValue: String) {
+    guard let data = rawValue.data(using: .utf8),
+      let result = try? JSONDecoder().decode(Set<Element>.self, from: data)
+    else {
+      return nil
+    }
+    self = result
+  }
 
-  var hasBoth: Bool {
-    quantities.count != 0 && categories.count != 0
+  public var rawValue: String {
+    guard let data = try? JSONEncoder().encode(self),
+      let result = String(data: data, encoding: .utf8)
+    else {
+      // Fallback for encoding failure.
+      return "[]"
+    }
+    return result
   }
 }
-
-let bodyMeasurementsGroup = CategoryGroup(
-  name: "Body Measurements",
-  quantities: [
-    .bodyMass, .bodyMassIndex, .leanBodyMass, .height, .waistCircumference, .bodyFatPercentage,
-    .electrodermalActivity,
-  ],
-  categories: []
-)
-
-let fitnessGroup = CategoryGroup(
-  name: "Fitness",
-  quantities: [
-    .activeEnergyBurned, .appleExerciseTime, .appleMoveTime, .appleStandTime, .basalEnergyBurned,
-    .cyclingCadence,
-    .cyclingFunctionalThresholdPower, .cyclingPower, .cyclingSpeed, .distanceCycling,
-    .distanceDownhillSnowSports,
-    .distanceSwimming, .distanceWalkingRunning, .distanceWheelchair, .flightsClimbed,
-    .physicalEffort, .pushCount,
-    .runningPower, .runningSpeed, .stepCount, .swimmingStrokeCount, .underwaterDepth,
-  ],
-  categories: []
-)
-
-let hearingHealthGroup = CategoryGroup(
-  name: "Hearing Health",
-  quantities: [
-    .environmentalAudioExposure, .environmentalSoundReduction, .headphoneAudioExposure,
-  ],
-  categories: [
-    .environmentalAudioExposureEvent, .headphoneAudioExposureEvent,
-  ]
-)
-
-let heartGroup = CategoryGroup(
-  name: "Heart",
-  quantities: [
-    .atrialFibrillationBurden, .heartRate, .heartRateRecoveryOneMinute, .heartRateVariabilitySDNN,
-    .peripheralPerfusionIndex,
-    .restingHeartRate, .vo2Max, .walkingHeartRateAverage,
-  ],
-  categories: [
-    .highHeartRateEvent, .irregularHeartRhythmEvent, .lowCardioFitnessEvent, .lowHeartRateEvent,
-  ]
-)
-
-let mobilityGroup = CategoryGroup(
-  name: "Mobility",
-  quantities: [
-    .appleWalkingSteadiness, .runningGroundContactTime, .runningStrideLength,
-    .runningVerticalOscillation,
-    .sixMinuteWalkTestDistance, .stairAscentSpeed, .stairDescentSpeed, .walkingAsymmetryPercentage,
-    .walkingDoubleSupportPercentage, .walkingSpeed, .walkingStepLength,
-  ],
-  categories: [
-    .appleWalkingSteadinessEvent
-  ]
-)
-
-let nutritionGroup = CategoryGroup(
-  name: "Nutrition",
-  quantities: [
-    .dietaryBiotin, .dietaryCaffeine, .dietaryCalcium, .dietaryCarbohydrates, .dietaryChloride,
-    .dietaryCholesterol,
-    .dietaryChromium, .dietaryCopper, .dietaryEnergyConsumed, .dietaryFatMonounsaturated,
-    .dietaryFatPolyunsaturated,
-    .dietaryFatSaturated, .dietaryFatTotal, .dietaryFiber, .dietaryFolate, .dietaryIodine,
-    .dietaryIron, .dietaryMagnesium,
-    .dietaryManganese, .dietaryMolybdenum, .dietaryNiacin, .dietaryPantothenicAcid,
-    .dietaryPhosphorus, .dietaryPotassium,
-    .dietaryProtein, .dietaryRiboflavin, .dietarySelenium, .dietarySodium, .dietarySugar,
-    .dietaryThiamin, .dietaryVitaminA,
-    .dietaryVitaminB12, .dietaryVitaminB6, .dietaryVitaminC, .dietaryVitaminD, .dietaryVitaminE,
-    .dietaryVitaminK, .dietaryWater,
-    .dietaryZinc,
-  ],
-  categories: []
-)
-
-let otherGroup = CategoryGroup(
-  name: "Other",
-  quantities: [
-    .bloodAlcoholContent, .bloodPressureDiastolic, .bloodPressureSystolic, .insulinDelivery,
-    .numberOfAlcoholicBeverages,
-    .numberOfTimesFallen, .timeInDaylight, .uvExposure, .waterTemperature,
-    .appleSleepingWristTemperature, .basalBodyTemperature,
-  ],
-  categories: [
-    .handwashingEvent, .toothbrushingEvent,
-  ]
-)
-
-let reproductiveHealthGroup = CategoryGroup(
-  name: "Reproductive Health",
-  quantities: [
-    //        .basalBodyTemperature
-  ],
-  categories: [
-    .cervicalMucusQuality, .contraceptive, .infrequentMenstrualCycles, .intermenstrualBleeding,
-    .irregularMenstrualCycles,
-    .lactation, .menstrualFlow, .ovulationTestResult, .persistentIntermenstrualBleeding, .pregnancy,
-    .pregnancyTestResult,
-    .progesteroneTestResult, .prolongedMenstrualPeriods, .sexualActivity,
-  ]
-)
-
-let respiratoryGroup = CategoryGroup(
-  name: "Respiratory",
-  quantities: [
-    .forcedExpiratoryVolume1, .forcedVitalCapacity, .inhalerUsage, .oxygenSaturation,
-    .peakExpiratoryFlowRate, .respiratoryRate,
-  ],
-  categories: []
-)
-
-let sleepGroup = CategoryGroup(
-  name: "Sleep",
-  quantities: [],
-  categories: [
-    .sleepAnalysis
-  ]
-)
-
-let symptomsGroup = CategoryGroup(
-  name: "Symptoms",
-  quantities: [],
-  categories: [
-    .abdominalCramps, .acne, .appetiteChanges, .bladderIncontinence, .bloating, .breastPain,
-    .chestTightnessOrPain,
-    .chills, .constipation, .coughing, .diarrhea, .dizziness, .drySkin, .fainting, .fatigue, .fever,
-    .generalizedBodyAche,
-    .hairLoss, .headache, .heartburn, .hotFlashes, .lossOfSmell, .lossOfTaste, .lowerBackPain,
-    .memoryLapse, .moodChanges,
-    .nausea, .nightSweats, .pelvicPain, .rapidPoundingOrFlutteringHeartbeat, .runnyNose,
-    .shortnessOfBreath,
-    .sinusCongestion, .skippedHeartbeat, .sleepChanges, .soreThroat, .vaginalDryness, .vomiting,
-    .wheezing,
-  ]
-)
-
-let vitalSignsGroup = CategoryGroup(
-  name: "Vital Signs",
-  quantities: [
-    .bloodGlucose, .bodyTemperature,
-  ],
-  categories: []
-)
