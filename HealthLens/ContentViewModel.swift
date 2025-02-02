@@ -361,7 +361,7 @@ class ContentViewModel: ObservableObject {
     let fileName = "HealthData\(uuid).csv"
     let fileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
 
-    var returnString = "\(header_datetime),\(header_category),\(header_unit),\(header_value)"
+    var returnString = "\(header_datetime),\(header_category),\(header_unit),\(header_value)\n"
 
     for quantityType in resultsDict.keys {
       let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
