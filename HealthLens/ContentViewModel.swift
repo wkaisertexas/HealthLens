@@ -433,6 +433,7 @@ class ContentViewModel: ObservableObject {
     // MARK: Formats
     let header_format = workbook_add_format(workbook)
     format_set_bold(header_format)
+    format_set_align(header_format, UInt8(LXW_ALIGN_CENTER.rawValue))
 
     let datetime_format = workbook_add_format(workbook)
     if let date_format_string = itemFormatter.dateFormat {
