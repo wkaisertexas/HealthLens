@@ -60,7 +60,7 @@ struct ContentView: View {
       VStack {
         Text("HealthLens").font(.largeTitle).fontWeight(.bold).frame(
           maxWidth: .infinity, alignment: .leading)
-        Text("Export your health data as a CSV").font(.subheadline).frame(
+        Text("Export your health data as a CSV or XLSX file").font(.subheadline).frame(
           maxWidth: .infinity, alignment: .leading)
       }
 
