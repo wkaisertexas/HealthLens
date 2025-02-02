@@ -361,7 +361,7 @@ class ContentViewModel: ObservableObject {
     let fileName = "HealthData\(uuid).csv"
     let fileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
 
-    var returnString = "\(header_datetime),\(header_category),\(header_unit),\(header_value)"
+    var returnString = "\(header_datetime),\(header_category),\(header_unit),\(header_value)\n"
 
     for quantityType in resultsDict.keys {
       let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
@@ -433,6 +433,7 @@ class ContentViewModel: ObservableObject {
     // MARK: Formats
     let header_format = workbook_add_format(workbook)
     format_set_bold(header_format)
+    format_set_align(header_format, UInt8(LXW_ALIGN_CENTER.rawValue))
 
     let datetime_format = workbook_add_format(workbook)
     if let date_format_string = itemFormatter.dateFormat {
