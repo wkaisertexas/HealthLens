@@ -93,10 +93,13 @@ let nutritionGroup = CategoryGroup(
 let otherGroup = CategoryGroup(
   name: "Other",
   quantities: [
-    .bloodAlcoholContent, .bloodPressureDiastolic, .bloodPressureSystolic, .insulinDelivery,
+    .bloodAlcoholContent, .insulinDelivery,
     .numberOfAlcoholicBeverages,
-    .numberOfTimesFallen, .timeInDaylight, .uvExposure, .waterTemperature,
+    .numberOfTimesFallen, 
     .appleSleepingWristTemperature, .basalBodyTemperature,
+    // .uvExposure,
+    // .timeInDaylight, .waterTemperature,
+    // .bloodPressureDiastolic, .bloodPressureSystolic,
   ],
   categories: [
     .handwashingEvent, .toothbrushingEvent,
