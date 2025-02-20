@@ -118,9 +118,9 @@ class ContentViewModel: ObservableObject {
   let categoryGroups = [
     bodyMeasurementsGroup,
     fitnessGroup,
-    hearingHealthGroup,
+    // hearingHealthGroup,
     heartGroup,
-    mobilityGroup,
+    // mobilityGroup,
     respiratoryGroup,
     vitalSignsGroup,
 
