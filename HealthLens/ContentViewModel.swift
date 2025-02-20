@@ -123,8 +123,8 @@ class ContentViewModel: ObservableObject {
     mobilityGroup,
     respiratoryGroup,
     vitalSignsGroup,
+
     otherGroup,
-    respiratoryGroup,
 
     // reproductiveHealthGroup,
     // sleepGroup,
