@@ -117,7 +117,7 @@ class ContentViewModel: ObservableObject {
   // -MARK: Health Kit Constants
   let categoryGroups = [
     bodyMeasurementsGroup,
-    fitnessGroup,
+    // fitnessGroup,
     // hearingHealthGroup,
     heartGroup,
     // mobilityGroup,
