@@ -273,13 +273,13 @@ class ContentViewModel: ObservableObject {
       return
     }
 
-    // we have authorization for exporting health data, we need ot do it
+    // we have authorization for exporting health data, we need to do it
     let generatedQuantityTypes: Set<HKQuantityType> = Set(
       selectedQuantityTypes.map({
         HKQuantityType.quantityType(forIdentifier: $0)!
       }))
 
-    // getting the prefered units
+    // getting the preferred units
     healthStore.preferredUnits(for: generatedQuantityTypes) { (mapping, error) in
       if let error = error {
         logger.error("Failed to generate the preferred unit types \(error)")
@@ -337,7 +337,7 @@ class ContentViewModel: ObservableObject {
     }
   }
 
-  /// Cleans up a csv string for santization
+  /// Cleans up a csv string for sanitization
   func sanitizeForCSV(_ input: String) -> String {
     var sanitized = input
 

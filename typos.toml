@@ -1,0 +1,7 @@
+[files]
+extend-exclude = [
+    "**/*.xcstrings",
+    "**/*.pbxproj",
+]
+
+[default.extend-words]
