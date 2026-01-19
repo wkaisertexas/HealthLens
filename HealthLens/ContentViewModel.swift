@@ -117,7 +117,7 @@ class ContentViewModel: ObservableObject {
   // -MARK: Health Kit Constants
   let categoryGroups = [
     bodyMeasurementsGroup,
-    // fitnessGroup,
+    fitnessGroup,
     // hearingHealthGroup,
     heartGroup,
     // mobilityGroup,
@@ -125,10 +125,6 @@ class ContentViewModel: ObservableObject {
     vitalSignsGroup,
 
     otherGroup,
-
-    // reproductiveHealthGroup,
-    // sleepGroup,
-    // symptomsGroup,
 
     // TODO: Add a way to export this commented out categories
     // reproductiveHealthGroup,
@@ -316,7 +312,8 @@ class ContentViewModel: ObservableObject {
         }
 
         if let sample = sample {
-          resultsDictionary[quantityType] = sample
+          // Always coalesce consecutive samples based on user request
+          resultsDictionary[quantityType] = self.mergeConsecutiveSamples(sample, for: quantityType, unit: unitsMapping[quantityType])
         }
 
         dispatchGroup.leave()
@@ -508,6 +505,142 @@ class ContentViewModel: ObservableObject {
   /// Makes a comma separated list of selectedQuantityTypes
   public func makeSelectedStringDescription() -> String {
     return selectedQuantityTypes.map({ quantityMapping[$0]! }).sorted().joined(separator: ", ")
+  }
+
+  /// Aggregates samples based on the interval
+  func aggregateSamples(_ samples: [HKSample], for type: HKQuantityType, interval: TimeInterval, unit: HKUnit?) -> [HKSample] {
+      guard interval > 0 else { return samples }
+      guard let quantitySamples = samples as? [HKQuantitySample], !quantitySamples.isEmpty else { return samples }
+      
+      let sortedSamples = quantitySamples.sorted { $0.startDate < $1.startDate }
+      var aggregatedSamples: [HKQuantitySample] = []
+      
+      let style = type.aggregationStyle
+      
+      // Use fallback unit if specific unit not provided, consistent with export logic
+      let unit = unit ?? fallbackUnits.first { type.is(compatibleWith: $0) } ?? HKUnit.count()
+
+      var currentBucketStart: Date?
+      var currentBucketSamples: [HKQuantitySample] = []
+      
+      for sample in sortedSamples {
+          let timeIntervalSince1970 = sample.startDate.timeIntervalSince1970
+          let bucketIndex = floor(timeIntervalSince1970 / interval)
+          let bucketStartTimestamp = bucketIndex * interval
+          let bucketStartDate = Date(timeIntervalSince1970: bucketStartTimestamp)
+          
+          if let currentStart = currentBucketStart {
+               if bucketStartDate > currentStart {
+                   let currentBucketEnd = currentStart.addingTimeInterval(interval)
+                   if let aggregated = processBucket(currentBucketSamples, start: currentStart, end: currentBucketEnd, type: type, style: style, unit: unit) {
+                       aggregatedSamples.append(aggregated)
+                   }
+                   currentBucketStart = bucketStartDate
+                   currentBucketSamples = [sample]
+               } else {
+                   currentBucketSamples.append(sample)
+               }
+          } else {
+              currentBucketStart = bucketStartDate
+              currentBucketSamples = [sample]
+          }
+      }
+      
+      if let currentStart = currentBucketStart {
+           let currentBucketEnd = currentStart.addingTimeInterval(interval)
+           if let aggregated = processBucket(currentBucketSamples, start: currentStart, end: currentBucketEnd, type: type, style: style, unit: unit) {
+              aggregatedSamples.append(aggregated)
+          }
+      }
+      
+      return aggregatedSamples
+  }
+
+  func processBucket(_ samples: [HKQuantitySample], start: Date, end: Date, type: HKQuantityType, style: HKQuantityAggregationStyle, unit: HKUnit) -> HKQuantitySample? {
+      guard !samples.isEmpty else { return nil }
+      
+      var aggregatedValue: Double = 0.0
+      
+      if style == .cumulative {
+          aggregatedValue = samples.reduce(0.0) { $0 + $1.quantity.doubleValue(for: unit) }
+      } else {
+          // Discrete: taking average
+          let sum = samples.reduce(0.0) { $0 + $1.quantity.doubleValue(for: unit) }
+          aggregatedValue = sum / Double(samples.count)
+      }
+      
+      let quantity = HKQuantity(unit: unit, doubleValue: aggregatedValue)
+      return HKQuantitySample(type: type, quantity: quantity, start: start, end: end)
+  }
+
+  /// Merges consecutive samples that are adjacent in time
+  func mergeConsecutiveSamples(_ samples: [HKSample], for type: HKQuantityType, unit: HKUnit?) -> [HKSample] {
+      guard let quantitySamples = samples as? [HKQuantitySample], !quantitySamples.isEmpty else { return samples }
+      
+      // Sort by start date
+      let sortedSamples = quantitySamples.sorted { $0.startDate < $1.startDate }
+      var mergedSamples: [HKQuantitySample] = []
+      
+      let style = type.aggregationStyle
+      let unit = unit ?? fallbackUnits.first { type.is(compatibleWith: $0) } ?? HKUnit.count()
+      
+      var currentBatch: [HKQuantitySample] = []
+      
+      for sample in sortedSamples {
+          guard let lastSample = currentBatch.last else {
+              currentBatch.append(sample)
+              continue
+          }
+          
+          // Check if contiguous (end of last is equal to start of current, within small tolerance e.g. 1 second)
+          if abs(sample.startDate.timeIntervalSince(lastSample.endDate)) < 1.0 {
+               currentBatch.append(sample)
+          } else {
+               // Gap found, process current batch
+               if let merged = combineBatch(currentBatch, type: type, style: style, unit: unit) {
+                   mergedSamples.append(merged)
+               }
+               currentBatch = [sample]
+          }
+      }
+      
+      // Process final batch
+      if let merged = combineBatch(currentBatch, type: type, style: style, unit: unit) {
+           mergedSamples.append(merged)
+      }
+      
+      return mergedSamples
+  }
+  
+  func combineBatch(_ samples: [HKQuantitySample], type: HKQuantityType, style: HKQuantityAggregationStyle, unit: HKUnit) -> HKQuantitySample? {
+      guard let first = samples.first, let last = samples.last else { return nil }
+      
+      let startDate = first.startDate
+      let endDate = last.endDate
+      var aggregatedValue: Double = 0.0
+      
+      if style == .cumulative {
+           aggregatedValue = samples.reduce(0.0) { $0 + $1.quantity.doubleValue(for: unit) }
+      } else {
+           // Weighted average by duration for discrete
+           let totalDuration = samples.reduce(0.0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
+           if totalDuration > 0 {
+               // Calculate weighted sum
+               let weightedSum = samples.reduce(0.0) { sum, sample in
+                   let duration = sample.endDate.timeIntervalSince(sample.startDate)
+                   let value = sample.quantity.doubleValue(for: unit)
+                   return sum + (value * duration)
+               }
+               aggregatedValue = weightedSum / totalDuration
+           } else {
+               // Fallback for zero duration samples (instantaneous) - simple average
+               let sum = samples.reduce(0.0) { $0 + $1.quantity.doubleValue(for: unit) }
+               aggregatedValue = sum / Double(samples.count)
+           }
+      }
+      
+      let quantity = HKQuantity(unit: unit, doubleValue: aggregatedValue)
+      return HKQuantitySample(type: type, quantity: quantity, start: startDate, end: endDate)
   }
 
   /// Makes a predicate only if the range is large enough
