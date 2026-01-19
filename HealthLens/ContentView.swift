@@ -4,7 +4,7 @@ import SwiftUI
 
 /// Represents the main content which is present in the application
 struct ContentView: View {
-  @ObservedObject private var contentViewModel = ContentViewModel()
+  @ObservedObject var contentViewModel: ContentViewModel
 
   @Environment(\.requestReview) private var requestReview
 
@@ -186,5 +186,5 @@ struct ContentView: View {
 }
 
 #Preview {
-  ContentView()
+  ContentView(contentViewModel: ContentViewModel())
 }
