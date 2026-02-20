@@ -95,7 +95,7 @@ let otherGroup = CategoryGroup(
   quantities: [
     .bloodAlcoholContent, .insulinDelivery,
     .numberOfAlcoholicBeverages,
-    .numberOfTimesFallen, 
+    .numberOfTimesFallen,
     .appleSleepingWristTemperature, .basalBodyTemperature,
     // .uvExposure,
     // .timeInDaylight, .waterTemperature,

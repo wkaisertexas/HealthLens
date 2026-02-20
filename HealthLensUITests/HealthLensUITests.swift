@@ -1,5 +1,5 @@
-import XCTest
 import SwiftUI
+import XCTest
 
 final class HealthLensUITests: XCTestCase {
 
@@ -18,7 +18,7 @@ final class HealthLensUITests: XCTestCase {
 
   @MainActor
   func testExample() throws {
-    
+
     let app = XCUIApplication()
     app.launchEnvironment["UITestInterfaceStyle"] = "Light"
     app.launchArguments.append("--uitesting-lightmode")
@@ -29,7 +29,7 @@ final class HealthLensUITests: XCTestCase {
     let renderer = ImageRenderer(content: marketingView)
 
     renderer.scale = UIScreen.main.scale
-        
+
     let attachment = XCTAttachment(image: renderer.uiImage!)
 
     attachment.name = "MarketingScreenshot"
