@@ -358,7 +358,10 @@ class ContentViewModel: ObservableObject {
     let fileName = "HealthData\(uuid).csv"
     let fileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
 
-    var returnString = "\(header_datetime),\(header_category),\(header_unit),\(header_value)\n"
+    let totalRows = resultsDict.values.reduce(0) { $0 + $1.count }
+    var rows = [String]()
+    rows.reserveCapacity(totalRows + 1)
+    rows.append("\(header_datetime),\(header_category),\(header_unit),\(header_value)")
 
     for quantityType in resultsDict.keys {
       let quantity_type_id = HKQuantityTypeIdentifier(rawValue: quantityType.identifier)
@@ -388,12 +391,13 @@ class ContentViewModel: ObservableObject {
 
         value = sanitizeForCSV(value)
 
-        returnString += "\(startDate),\(quantity_type_string),\(unit.unitString),\(value)\n"
+        rows.append("\(startDate),\(quantity_type_string),\(unit.unitString),\(value)")
       }
     }
 
     do {
-      try returnString.write(to: fileURL, atomically: true, encoding: .utf8)
+      let csvString = rows.joined(separator: "\n") + "\n"
+      try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
       // Resume continuation with the file URL
       continuation.resume(returning: fileURL)
     } catch {
