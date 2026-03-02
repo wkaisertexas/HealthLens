@@ -7,6 +7,10 @@ let export_count = 2  //< How many unique exports must be asked for before a rev
 let categories_exported = 10  //< Categories exported before a review is asked for
 let time_difference_large_enough: TimeInterval = 1 * 24 * 60 * 60  //< 1 Day in seconds
 let sample_cap = 50_000  //< Max number of samples to export
+let merge_gap_tolerance: TimeInterval = 60.0  //< Max gap (seconds) to still consider samples consecutive
+let max_merged_duration: TimeInterval = 86400  //< 1 day -- cap to avoid HK validation errors
+let dense_sample_threshold = 10_000  //< Apply time-bucketing when merge output exceeds this
+let time_bucket_interval: TimeInterval = 300  //< 5-minute buckets for dense data
 
 /// Contains all of the data to store the necessary health records
 class ContentViewModel: ObservableObject {
@@ -313,9 +317,15 @@ class ContentViewModel: ObservableObject {
         }
 
         if let sample = sample {
-          // Always coalesce consecutive samples based on user request
-          resultsDictionary[quantityType] = self.mergeConsecutiveSamples(
+          // Coalesce consecutive samples, then bucket if still dense
+          var merged = self.mergeConsecutiveSamples(
             sample, for: quantityType, unit: unitsMapping[quantityType])
+          if merged.count > dense_sample_threshold {
+            merged = self.aggregateSamples(
+              merged, for: quantityType, interval: time_bucket_interval,
+              unit: unitsMapping[quantityType])
+          }
+          resultsDictionary[quantityType] = merged
         }
 
         dispatchGroup.leave()
@@ -608,16 +618,19 @@ class ContentViewModel: ObservableObject {
     var currentBatch: [HKQuantitySample] = []
 
     for sample in sortedSamples {
-      guard let lastSample = currentBatch.last else {
+      guard let lastSample = currentBatch.last, let firstSample = currentBatch.first else {
         currentBatch.append(sample)
         continue
       }
 
-      // Check if contiguous (end of last is equal to start of current, within small tolerance e.g. 1 second)
-      if abs(sample.startDate.timeIntervalSince(lastSample.endDate)) < 1.0 {
+      let gap = abs(sample.startDate.timeIntervalSince(lastSample.endDate))
+      let batchDuration = sample.endDate.timeIntervalSince(firstSample.startDate)
+
+      // Merge if gap is small enough AND batch won't exceed max duration
+      if gap < merge_gap_tolerance && batchDuration < max_merged_duration {
         currentBatch.append(sample)
       } else {
-        // Gap found, process current batch
+        // Gap too large or batch would exceed max duration, flush current batch
         if let merged = combineBatch(currentBatch, type: type, style: style, unit: unit) {
           mergedSamples.append(merged)
         }

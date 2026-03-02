@@ -175,4 +175,80 @@ final class MergeConsecutiveSamplesTests: XCTestCase {
       merged.quantity.doubleValue(for: .count()), 100.0,
       "Sum should be 100")
   }
+
+  // MARK: - Near-consecutive samples merge with gap tolerance
+
+  func testNearConsecutiveSamplesWithSmallGapsMerge() {
+    let type = HKQuantityType.quantityType(forIdentifier: .stepCount)!
+    let startDate = Date(timeIntervalSince1970: 1_000_000)
+
+    // Create samples with 30-second gaps between them (within merge_gap_tolerance of 60s)
+    var samples: [HKQuantitySample] = []
+    var current = startDate
+    for _ in 0..<10 {
+      let end = current.addingTimeInterval(1.0)
+      samples.append(
+        TestSampleFactory.makeSample(type: .stepCount, value: 5, start: current, end: end))
+      current = end.addingTimeInterval(30.0)  // 30-second gap
+    }
+
+    let result = viewModel.mergeConsecutiveSamples(samples, for: type, unit: .count())
+
+    XCTAssertEqual(result.count, 1, "Samples with 30-second gaps should merge (within 60s tolerance)")
+    let merged = result.first as! HKQuantitySample
+    XCTAssertEqual(
+      merged.quantity.doubleValue(for: .count()), 50.0,
+      "Cumulative merge should sum all values")
+  }
+
+  func testSamplesWithGapExceedingToleranceStaySeparate() {
+    let type = HKQuantityType.quantityType(forIdentifier: .stepCount)!
+    let startDate = Date(timeIntervalSince1970: 1_000_000)
+
+    // Create samples with 120-second gaps (exceeds merge_gap_tolerance of 60s)
+    var samples: [HKQuantitySample] = []
+    var current = startDate
+    for _ in 0..<5 {
+      let end = current.addingTimeInterval(1.0)
+      samples.append(
+        TestSampleFactory.makeSample(type: .stepCount, value: 10, start: current, end: end))
+      current = end.addingTimeInterval(120.0)  // 120-second gap
+    }
+
+    let result = viewModel.mergeConsecutiveSamples(samples, for: type, unit: .count())
+
+    XCTAssertEqual(result.count, 5, "Samples with 120-second gaps should not merge")
+  }
+
+  // MARK: - Max batch duration cap (prevents HK validation errors)
+
+  func testLongConsecutiveRunSplitsAtMaxDuration() {
+    let type = HKQuantityType.quantityType(forIdentifier: .stepCount)!
+    // Create consecutive 1-hour samples spanning 30 hours (exceeds 1 day max_merged_duration)
+    let samples = TestSampleFactory.makeConsecutiveSamples(
+      type: .stepCount, unit: .count(), count: 30,
+      intervalSeconds: 3600.0, value: 100)
+
+    let result = viewModel.mergeConsecutiveSamples(samples, for: type, unit: .count())
+
+    // 30 hours of consecutive data should be split into at least 2 batches
+    // (first batch: 24 hours, second batch: 6 hours)
+    XCTAssertGreaterThan(result.count, 1, "30-hour run should be split at max_merged_duration")
+
+    // Each merged sample should not exceed max_merged_duration
+    for sample in result {
+      let qs = sample as! HKQuantitySample
+      let duration = qs.endDate.timeIntervalSince(qs.startDate)
+      XCTAssertLessThanOrEqual(
+        duration, max_merged_duration,
+        "No merged sample should exceed max_merged_duration (\(max_merged_duration)s)")
+    }
+
+    // Total value should be preserved
+    let totalValue = result.reduce(0.0) { sum, sample in
+      let qs = sample as! HKQuantitySample
+      return sum + qs.quantity.doubleValue(for: .count())
+    }
+    XCTAssertEqual(totalValue, 3000.0, "Total cumulative value should be preserved across splits")
+  }
 }

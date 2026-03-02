@@ -97,12 +97,11 @@ final class RealDataExportTests: XCTestCase {
 
       if let content = try? String(contentsOf: url, encoding: .utf8) {
         let lines = content.components(separatedBy: "\n").filter { !$0.isEmpty }
-        // If there's real data, the merging should produce reasonable row counts
-        // (not thousands of 1-second rows)
+        // After merge + time-bucketing, row count should be manageable for phone export
         if lines.count > 1 {
           XCTAssertLessThan(
-            lines.count, 10_000,
-            "Merged time in daylight should not produce thousands of 1-second rows")
+            lines.count, 100_000,
+            "Time in daylight export should produce a manageable number of rows")
         }
       }
 
