@@ -1,0 +1,34 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          xcodebuild build \
+            -scheme HealthLens \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Unit Tests
+        run: |
+          xcodebuild test \
+            -scheme HealthLens \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -only-testing:HealthLensTests \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
