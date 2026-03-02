@@ -22,6 +22,18 @@
 		3EF2608C2C448000001ABA12 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EF2608B2C447FFF001ABA12 /* HealthKit.framework */; };
 		3EF260902C457494001ABA12 /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF2608F2C457494001ABA12 /* ContentViewModel.swift */; };
 		3EF9FD132C498499000F4341 /* ExportFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF9FD122C498499000F4341 /* ExportFile.swift */; };
+		AA00020000000000000001AA /* MockHealthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000001AA /* MockHealthStore.swift */; };
+		AA00020000000000000002AA /* MockHealthStoreWithData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000002AA /* MockHealthStoreWithData.swift */; };
+		AA00020000000000000003AA /* TestSampleFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000003AA /* TestSampleFactory.swift */; };
+		AA00020000000000000004AA /* SanitizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000004AA /* SanitizationTests.swift */; };
+		AA00020000000000000005AA /* MergeConsecutiveSamplesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000005AA /* MergeConsecutiveSamplesTests.swift */; };
+		AA00020000000000000006AA /* DateRangePredicateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000006AA /* DateRangePredicateTests.swift */; };
+		AA00020000000000000007AA /* ExportCSVTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000007AA /* ExportCSVTests.swift */; };
+		AA00020000000000000008AA /* ExportXLSXTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000008AA /* ExportXLSXTests.swift */; };
+		AA00020000000000000009AA /* UnitCompatibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000009AA /* UnitCompatibilityTests.swift */; };
+		AA0002000000000000000AAA /* RealDataExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0001000000000000000AAA /* RealDataExportTests.swift */; };
+		AA0002000000000000000BAA /* DateRangeRealDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0001000000000000000BAA /* DateRangeRealDataTests.swift */; };
+		AA0002000000000000000CAA /* XLSXStabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0001000000000000000CAA /* XLSXStabilityTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,6 +45,13 @@
 			remoteInfo = HealthLens;
 		};
 		3EA025D92C32FE7500EEC4C3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3EA025B42C32FE7300EEC4C3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3EA025BB2C32FE7300EEC4C3;
+			remoteInfo = HealthLens;
+		};
+		AA00030000000000000005AA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3EA025B42C32FE7300EEC4C3 /* Project object */;
 			proxyType = 1;
@@ -61,6 +80,19 @@
 		3EF2608E2C4481A6001ABA12 /* HealthLens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HealthLens.entitlements; sourceTree = "<group>"; };
 		3EF2608F2C457494001ABA12 /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
 		3EF9FD122C498499000F4341 /* ExportFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportFile.swift; sourceTree = "<group>"; };
+		AA00010000000000000001AA /* MockHealthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockHealthStore.swift; sourceTree = "<group>"; };
+		AA00010000000000000002AA /* MockHealthStoreWithData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockHealthStoreWithData.swift; sourceTree = "<group>"; };
+		AA00010000000000000003AA /* TestSampleFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSampleFactory.swift; sourceTree = "<group>"; };
+		AA00010000000000000004AA /* SanitizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SanitizationTests.swift; sourceTree = "<group>"; };
+		AA00010000000000000005AA /* MergeConsecutiveSamplesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MergeConsecutiveSamplesTests.swift; sourceTree = "<group>"; };
+		AA00010000000000000006AA /* DateRangePredicateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateRangePredicateTests.swift; sourceTree = "<group>"; };
+		AA00010000000000000007AA /* ExportCSVTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportCSVTests.swift; sourceTree = "<group>"; };
+		AA00010000000000000008AA /* ExportXLSXTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportXLSXTests.swift; sourceTree = "<group>"; };
+		AA00010000000000000009AA /* UnitCompatibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitCompatibilityTests.swift; sourceTree = "<group>"; };
+		AA0001000000000000000AAA /* RealDataExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealDataExportTests.swift; sourceTree = "<group>"; };
+		AA0001000000000000000BAA /* DateRangeRealDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateRangeRealDataTests.swift; sourceTree = "<group>"; };
+		AA0001000000000000000CAA /* XLSXStabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XLSXStabilityTests.swift; sourceTree = "<group>"; };
+		AA0001000000000000000DAA /* HealthLensIntegrationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HealthLensIntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,6 +119,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA00030000000000000003AA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -96,6 +135,7 @@
 				3EA025BE2C32FE7300EEC4C3 /* HealthLens */,
 				3EA025D12C32FE7500EEC4C3 /* HealthLensTests */,
 				3EA025DB2C32FE7500EEC4C3 /* HealthLensUITests */,
+				AA0003000000000000000AAA /* HealthLensIntegrationTests */,
 				3EA025BD2C32FE7300EEC4C3 /* Products */,
 				3EF2608A2C447FFF001ABA12 /* Frameworks */,
 			);
@@ -107,6 +147,7 @@
 				3EA025BC2C32FE7300EEC4C3 /* HealthLens.app */,
 				3EA025CE2C32FE7500EEC4C3 /* HealthLensTests.xctest */,
 				3EA025D82C32FE7500EEC4C3 /* HealthLensUITests.xctest */,
+				AA0001000000000000000DAA /* HealthLensIntegrationTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -141,6 +182,15 @@
 			isa = PBXGroup;
 			children = (
 				3EA025D22C32FE7500EEC4C3 /* HealthLensTests.swift */,
+				AA00010000000000000001AA /* MockHealthStore.swift */,
+				AA00010000000000000002AA /* MockHealthStoreWithData.swift */,
+				AA00010000000000000003AA /* TestSampleFactory.swift */,
+				AA00010000000000000004AA /* SanitizationTests.swift */,
+				AA00010000000000000005AA /* MergeConsecutiveSamplesTests.swift */,
+				AA00010000000000000006AA /* DateRangePredicateTests.swift */,
+				AA00010000000000000007AA /* ExportCSVTests.swift */,
+				AA00010000000000000008AA /* ExportXLSXTests.swift */,
+				AA00010000000000000009AA /* UnitCompatibilityTests.swift */,
 			);
 			path = HealthLensTests;
 			sourceTree = "<group>";
@@ -161,6 +211,16 @@
 				3EF2608B2C447FFF001ABA12 /* HealthKit.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AA0003000000000000000AAA /* HealthLensIntegrationTests */ = {
+			isa = PBXGroup;
+			children = (
+				AA0001000000000000000AAA /* RealDataExportTests.swift */,
+				AA0001000000000000000BAA /* DateRangeRealDataTests.swift */,
+				AA0001000000000000000CAA /* XLSXStabilityTests.swift */,
+			);
+			path = HealthLensIntegrationTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -220,6 +280,24 @@
 			productReference = 3EA025D82C32FE7500EEC4C3 /* HealthLensUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		AA00030000000000000001AA /* HealthLensIntegrationTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA00030000000000000009AA /* Build configuration list for PBXNativeTarget "HealthLensIntegrationTests" */;
+			buildPhases = (
+				AA00030000000000000002AA /* Sources */,
+				AA00030000000000000003AA /* Frameworks */,
+				AA00030000000000000004AA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA00030000000000000006AA /* PBXTargetDependency */,
+			);
+			name = HealthLensIntegrationTests;
+			productName = HealthLensIntegrationTests;
+			productReference = AA0001000000000000000DAA /* HealthLensIntegrationTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -238,6 +316,10 @@
 						TestTargetID = 3EA025BB2C32FE7300EEC4C3;
 					};
 					3EA025D72C32FE7500EEC4C3 = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = 3EA025BB2C32FE7300EEC4C3;
+					};
+					AA00030000000000000001AA = {
 						CreatedOnToolsVersion = 15.4;
 						TestTargetID = 3EA025BB2C32FE7300EEC4C3;
 					};
@@ -262,6 +344,7 @@
 				3EA025BB2C32FE7300EEC4C3 /* HealthLens */,
 				3EA025CD2C32FE7500EEC4C3 /* HealthLensTests */,
 				3EA025D72C32FE7500EEC4C3 /* HealthLensUITests */,
+				AA00030000000000000001AA /* HealthLensIntegrationTests */,
 			);
 		};
 /* End PBXProject section */
@@ -291,6 +374,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA00030000000000000004AA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -312,6 +402,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				3EA025D32C32FE7500EEC4C3 /* HealthLensTests.swift in Sources */,
+				AA00020000000000000001AA /* MockHealthStore.swift in Sources */,
+				AA00020000000000000002AA /* MockHealthStoreWithData.swift in Sources */,
+				AA00020000000000000003AA /* TestSampleFactory.swift in Sources */,
+				AA00020000000000000004AA /* SanitizationTests.swift in Sources */,
+				AA00020000000000000005AA /* MergeConsecutiveSamplesTests.swift in Sources */,
+				AA00020000000000000006AA /* DateRangePredicateTests.swift in Sources */,
+				AA00020000000000000007AA /* ExportCSVTests.swift in Sources */,
+				AA00020000000000000008AA /* ExportXLSXTests.swift in Sources */,
+				AA00020000000000000009AA /* UnitCompatibilityTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -322,6 +421,16 @@
 				3EA025DF2C32FE7500EEC4C3 /* HealthLensUITestsLaunchTests.swift in Sources */,
 				3EE9B02F2D4D827200EA7FC6 /* MarketingScreenShotView.swift in Sources */,
 				3EA025DD2C32FE7500EEC4C3 /* HealthLensUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA00030000000000000002AA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0002000000000000000AAA /* RealDataExportTests.swift in Sources */,
+				AA0002000000000000000BAA /* DateRangeRealDataTests.swift in Sources */,
+				AA0002000000000000000CAA /* XLSXStabilityTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -341,6 +450,11 @@
 			isa = PBXTargetDependency;
 			target = 3EA025BB2C32FE7300EEC4C3 /* HealthLens */;
 			targetProxy = 3EA025D92C32FE7500EEC4C3 /* PBXContainerItemProxy */;
+		};
+		AA00030000000000000006AA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3EA025BB2C32FE7300EEC4C3 /* HealthLens */;
+			targetProxy = AA00030000000000000005AA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -631,6 +745,46 @@
 			};
 			name = Release;
 		};
+		AA00030000000000000007AA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PPA4LZZXUN;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.smartservices.HealthLensIntegrationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HealthLens.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HealthLens";
+			};
+			name = Debug;
+		};
+		AA00030000000000000008AA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PPA4LZZXUN;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.smartservices.HealthLensIntegrationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HealthLens.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HealthLens";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -666,6 +820,15 @@
 			buildConfigurations = (
 				3EA025E92C32FE7500EEC4C3 /* Debug */,
 				3EA025EA2C32FE7500EEC4C3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA00030000000000000009AA /* Build configuration list for PBXNativeTarget "HealthLensIntegrationTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00030000000000000007AA /* Debug */,
+				AA00030000000000000008AA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
