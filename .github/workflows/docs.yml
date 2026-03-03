@@ -1,0 +1,78 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - name: Build DocC archive
+        run: |
+          xcodebuild docbuild \
+            -scheme HealthLens \
+            -derivedDataPath DerivedData \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Transform archive for GitHub Pages
+        env:
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+
+          archive_path="$(find DerivedData -type d -name 'HealthLens.doccarchive' -print -quit)"
+
+          if [[ -z "${archive_path}" ]]; then
+            echo "No .doccarchive was produced."
+            exit 1
+          fi
+
+          docc_cmd="$(xcrun --find docc)"
+          output_path="docs-site"
+
+          if [[ "${REPOSITORY_NAME}" == *.github.io ]]; then
+            "${docc_cmd}" process-archive transform-for-static-hosting \
+              "${archive_path}" \
+              --output-path "${output_path}"
+          else
+            "${docc_cmd}" process-archive transform-for-static-hosting \
+              "${archive_path}" \
+              --output-path "${output_path}" \
+              --hosting-base-path "${REPOSITORY_NAME}"
+          fi
+
+          touch "${output_path}/.nojekyll"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-site
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
