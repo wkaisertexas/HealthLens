@@ -1,4 +1,4 @@
-Privacy Policy for HealthLens
+# Privacy Policy for HealthLens
 
 Effective Date: July 22nd, 2024
 
