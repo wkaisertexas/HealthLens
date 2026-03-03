@@ -1,16 +1,17 @@
-# ``HealthLens``
+# HealthLens
 
 The missing export button for Apple Health.
 
 @Metadata {
+  @TechnologyRoot
   @PageColor(blue)
 }
 
 ## Overview
 
-HealthLens is an open-source iOS app that exports your Apple Health data to **CSV** and **XLSX** formats for analysis outside the Health app. Whether you're tracking fitness progress in a spreadsheet, feeding data into a research pipeline, or just want a local backup, HealthLens gets your data out in seconds.
-
-- **No account required** — open the app, pick your data, and share.
+HealthLens is an open-source iOS app that exports your Apple Health data to **CSV** and **XLSX** formats for analysis outside the Health app.
+Whether you're tracking fitness progress in a spreadsheet, feeding data - **Completely offline** — your health data never leaves your device.
+t required** — open the app, pick your data, and share.
 - **Completely offline** — your health data never leaves your device. No servers, no analytics, no tracking.
 - **Open source** — inspect every line of code on [GitHub](https://github.com/wkaisertexas/HealthLens).
 
