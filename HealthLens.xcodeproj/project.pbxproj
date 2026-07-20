@@ -23,6 +23,7 @@
 		3EF2608C2C448000001ABA12 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EF2608B2C447FFF001ABA12 /* HealthKit.framework */; };
 		3EF260902C457494001ABA12 /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF2608F2C457494001ABA12 /* ContentViewModel.swift */; };
 		3EF9FD132C498499000F4341 /* ExportFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF9FD122C498499000F4341 /* ExportFile.swift */; };
+		AA10020000000000000001AA /* HealthDataExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10010000000000000001AA /* HealthDataExport.swift */; };
 		AA00020000000000000001AA /* MockHealthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000001AA /* MockHealthStore.swift */; };
 		AA00020000000000000002AA /* MockHealthStoreWithData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000002AA /* MockHealthStoreWithData.swift */; };
 		AA00020000000000000003AA /* TestSampleFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00010000000000000003AA /* TestSampleFactory.swift */; };
@@ -82,6 +83,7 @@
 		3EF2608E2C4481A6001ABA12 /* HealthLens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HealthLens.entitlements; sourceTree = "<group>"; };
 		3EF2608F2C457494001ABA12 /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
 		3EF9FD122C498499000F4341 /* ExportFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportFile.swift; sourceTree = "<group>"; };
+		AA10010000000000000001AA /* HealthDataExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataExport.swift; sourceTree = "<group>"; };
 		AA00010000000000000001AA /* MockHealthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockHealthStore.swift; sourceTree = "<group>"; };
 		AA00010000000000000002AA /* MockHealthStoreWithData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockHealthStoreWithData.swift; sourceTree = "<group>"; };
 		AA00010000000000000003AA /* TestSampleFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSampleFactory.swift; sourceTree = "<group>"; };
@@ -167,6 +169,7 @@
 				3EF2608F2C457494001ABA12 /* ContentViewModel.swift */,
 				3E98758D2C46E5A300FD1CA5 /* Logger.swift */,
 				3EF9FD122C498499000F4341 /* ExportFile.swift */,
+				AA10010000000000000001AA /* HealthDataExport.swift */,
 				B2B2B2B2B2B2B2B2B2B2B2B2 /* HealthLens.docc */,
 				3EDD0C5B2C4EB94000471A4A /* LaunchScreen.storyboard */,
 			);
@@ -396,6 +399,7 @@
 				3EF260902C457494001ABA12 /* ContentViewModel.swift in Sources */,
 				3EA025C22C32FE7300EEC4C3 /* ContentView.swift in Sources */,
 				3EF9FD132C498499000F4341 /* ExportFile.swift in Sources */,
+				AA10020000000000000001AA /* HealthDataExport.swift in Sources */,
 				3EA025C02C32FE7300EEC4C3 /* HealthLensApp.swift in Sources */,
 				3E1EAE4D2D38155B00090EC5 /* Groups.swift in Sources */,
 			);

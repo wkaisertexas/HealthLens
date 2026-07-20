@@ -23,9 +23,28 @@ final class ExportCSVTests: XCTestCase {
     results: [HKObjectType: [HKSample]],
     units: [HKObjectType: HKUnit] = [:]
   ) async -> URL {
-    return await withUnsafeContinuation { continuation in
-      viewModel.exportCSVData(results, continuation: continuation, unitsMapping: units)
+    var records: [ExportRecord] = []
+    for (type, samples) in results.sorted(by: { $0.key.identifier < $1.key.identifier }) {
+      guard let quantityType = type as? HKQuantityType else { continue }
+      let unit =
+        units[type]
+        ?? viewModel.fallbackUnits.first { quantityType.is(compatibleWith: $0) }
+        ?? .count()
+      let identifier = HKQuantityTypeIdentifier(rawValue: type.identifier)
+      for sample in samples.compactMap({ $0 as? HKQuantitySample }) {
+        records.append(
+          ExportRecord(
+            date: sample.startDate,
+            category: viewModel.quantityMapping[identifier] ?? "Unknown",
+            unit: unit.unitString,
+            value: sample.quantity.doubleValue(for: unit)))
+      }
     }
+    return try! CSVWriter(
+      headers: viewModel.csv_headers,
+      dateFormatter: testDateFormatter(),
+      numberFormatter: testNumberFormatter()
+    ).write(records: records)
   }
 
   // MARK: - Header row
@@ -159,6 +178,20 @@ final class ExportCSVTests: XCTestCase {
     XCTAssertFalse(data.isEmpty)
     XCTAssertEqual(data.filter { $0 == 0x0A }.count, sample_cap + 1)
   }
+
+  func testCSVFileSystemFailureThrowsTypedError() {
+    let writer = CSVWriter(
+      headers: ["Datetime", "Category", "Unit", "Value"],
+      dateFormatter: testDateFormatter(),
+      numberFormatter: testNumberFormatter(),
+      directory: URL(fileURLWithPath: "/dev/null"))
+
+    XCTAssertThrowsError(try writer.write(records: [])) { error in
+      guard case HealthExportError.csvWriteFailed = error else {
+        return XCTFail("Unexpected error: \(error)")
+      }
+    }
+  }
 }
 
 final class CSVExportPerformanceTests: XCTestCase {
@@ -174,15 +207,20 @@ final class CSVExportPerformanceTests: XCTestCase {
   }
 
   private func export(_ samples: [HKSample]) async -> TimeInterval {
-    let viewModel = ContentViewModel(healthStore: MockHealthStore())
-    let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
-    let start = ProcessInfo.processInfo.systemUptime
-    let url = await withUnsafeContinuation { continuation in
-      viewModel.exportCSVData(
-        [stepType: samples],
-        continuation: continuation,
-        unitsMapping: [stepType: .count()])
+    let records = samples.compactMap { sample -> ExportRecord? in
+      guard let sample = sample as? HKQuantitySample else { return nil }
+      return ExportRecord(
+        date: sample.startDate,
+        category: "Step Count",
+        unit: HKUnit.count().unitString,
+        value: sample.quantity.doubleValue(for: .count()))
     }
+    let start = ProcessInfo.processInfo.systemUptime
+    let url = try! CSVWriter(
+      headers: ["Datetime", "Category", "Unit", "Value"],
+      dateFormatter: testDateFormatter(),
+      numberFormatter: testNumberFormatter()
+    ).write(records: records)
     let duration = ProcessInfo.processInfo.systemUptime - start
     try? FileManager.default.removeItem(at: url)
     return duration
@@ -210,4 +248,21 @@ final class CSVExportPerformanceTests: XCTestCase {
     XCTAssertLessThan(largeMedian, 10)
     XCTAssertLessThanOrEqual(largeMedian, smallMedian * 12)
   }
+}
+
+private func testDateFormatter() -> DateFormatter {
+  let formatter = DateFormatter()
+  formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+  formatter.locale = Locale(identifier: "en_US_POSIX")
+  formatter.timeZone = TimeZone(secondsFromGMT: 0)
+  return formatter
+}
+
+private func testNumberFormatter() -> NumberFormatter {
+  let formatter = NumberFormatter()
+  formatter.numberStyle = .decimal
+  formatter.minimumFractionDigits = 2
+  formatter.maximumFractionDigits = 2
+  formatter.locale = Locale(identifier: "en_US_POSIX")
+  return formatter
 }

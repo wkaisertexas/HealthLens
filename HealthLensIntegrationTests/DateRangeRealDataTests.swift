@@ -38,7 +38,7 @@ final class DateRangeRealDataTests: XCTestCase {
     let expectation = self.expectation(description: "7-Day Export")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
@@ -59,7 +59,7 @@ final class DateRangeRealDataTests: XCTestCase {
     let expectation = self.expectation(description: "Unfiltered Export")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
@@ -80,7 +80,7 @@ final class DateRangeRealDataTests: XCTestCase {
 
     Task {
       // First: unfiltered export
-      let unfilteredURL = await viewModel.asyncExportHealthData()
+      let unfilteredURL = try! await viewModel.asyncExportHealthData()
       let unfilteredContent = (try? String(contentsOf: unfilteredURL, encoding: .utf8)) ?? ""
       let unfilteredLines = unfilteredContent.components(separatedBy: "\n").filter { !$0.isEmpty }
 
@@ -91,7 +91,7 @@ final class DateRangeRealDataTests: XCTestCase {
       viewModel.startDate = now.addingTimeInterval(-2 * 24 * 60 * 60)
       viewModel.endDate = now
 
-      let filteredURL = await viewModel.asyncExportHealthData()
+      let filteredURL = try! await viewModel.asyncExportHealthData()
       let filteredContent = (try? String(contentsOf: filteredURL, encoding: .utf8)) ?? ""
       let filteredLines = filteredContent.components(separatedBy: "\n").filter { !$0.isEmpty }
 

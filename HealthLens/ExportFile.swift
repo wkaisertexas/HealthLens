@@ -8,39 +8,38 @@ enum ExportFormat: String, CaseIterable {
 }
 
 struct CSVExportFile {
-  typealias FileExportType = () async -> URL?
+  typealias FileExportType = () async throws -> URL
   typealias FileType = () -> String
   public var collectData: FileExportType?
   public var fileName: FileType?
 }
 
 extension CSVExportFile: Transferable {
-  enum ShareError: Error {
-    case failed
+  enum ShareError: LocalizedError {
+    case exportUnavailable
+
+    var errorDescription: String? {
+      String(localized: "The export is not available.")
+    }
   }
 
-  func shareURL() async -> URL? {
-    guard let collectData = collectData else {
-      return nil
+  func shareURL() async throws -> URL {
+    guard let collectData else {
+      throw ShareError.exportUnavailable
     }
-
-    guard let result = await collectData() else {
-      return nil
-    }
-
-    return result
+    return try await collectData()
   }
 
   static var transferRepresentation: some TransferRepresentation {
     FileRepresentation(exportedContentType: .commaSeparatedText) { object in
-      .init(await object.shareURL()!)
+      .init(try await object.shareURL())
     }.suggestedFileName { $0.fileName?() ?? "healthData" }
       .visibility(.all)
   }
 }
 
 struct XLSXExportFile {
-  typealias FileExportType = () async -> URL?
+  typealias FileExportType = () async throws -> URL
   typealias FileType = () -> String
   public var collectData: FileExportType?
   public var fileName: FileType?
@@ -53,26 +52,25 @@ extension UTType {
 }
 
 extension XLSXExportFile: Transferable {
-  enum ShareError: Error {
-    case failed
+  enum ShareError: LocalizedError {
+    case exportUnavailable
+
+    var errorDescription: String? {
+      String(localized: "The export is not available.")
+    }
   }
 
-  func shareURL() async -> URL? {
-    guard let collectData = collectData else {
-      return nil
+  func shareURL() async throws -> URL {
+    guard let collectData else {
+      throw ShareError.exportUnavailable
     }
-
-    guard let result = await collectData() else {
-      return nil
-    }
-
-    return result
+    return try await collectData()
   }
 
   /// Creates a data representation transfer which is setup as a comma separated text
   static var transferRepresentation: some TransferRepresentation {
     FileRepresentation(exportedContentType: .xlsx) { object in
-      .init(await object.shareURL()!)
+      .init(try await object.shareURL())
     }.suggestedFileName { $0.fileName?() ?? "healthData.xlsx" }
       .visibility(.all)
   }

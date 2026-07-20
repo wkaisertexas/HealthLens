@@ -1,7 +1,6 @@
 import HealthKit
 import StoreKit
 import SwiftUI
-import libxlsxwriter
 
 let export_count = 2  //< How many unique exports must be asked for before a review
 let categories_exported = 10  //< Categories exported before a review is asked for
@@ -14,10 +13,10 @@ let time_bucket_interval: TimeInterval = 300  //< 5-minute buckets for dense dat
 
 /// Contains all of the data to store the necessary health records
 class ContentViewModel: ObservableObject {
-  private let healthStore: HealthStoreProtocol
-  typealias ExportContinuation = UnsafeContinuation<URL, Never>
+  private var exporter: HealthDataExporting!
 
   @Published public var searchText: String = ""
+  @Published public var exportErrorMessage: String?
 
   @AppStorage("exportFormat") public var selectedExportFormat: ExportFormat = .csv
 
@@ -94,8 +93,10 @@ class ContentViewModel: ObservableObject {
     return "\(result)"
   }
 
-  public init(healthStore: HealthStoreProtocol = HKHealthStore()) {
-    self.healthStore = healthStore
+  public init(
+    exporter: HealthDataExporting? = nil,
+    healthStore: HealthStoreProtocol? = nil
+  ) {
     // Setting up the two export files
     xlsxShareTarget = XLSXExportFile()
     csvShareTarget = CSVExportFile()
@@ -117,6 +118,24 @@ class ContentViewModel: ObservableObject {
         categoryTypes.append(obj)
       }
     })
+
+    let client: HealthStoreClient =
+      healthStore.map { LegacyHealthStoreClient(store: $0) }
+      ?? HKHealthStoreClient()
+    self.exporter =
+      exporter
+      ?? HealthDataExportService(
+        healthStore: client,
+        processor: HealthSampleProcessor(fallbackUnits: fallbackUnits),
+        csvWriter: CSVWriter(
+          headers: csv_headers,
+          dateFormatter: itemFormatter,
+          numberFormatter: numberFormatter),
+        xlsxWriter: XLSXWriter(
+          headers: xlsx_headers,
+          dateFormatter: itemFormatter,
+          numberFormatter: numberFormatter),
+        categoryNames: quantityMapping)
   }
 
   // -MARK: Health Kit Constants
@@ -212,20 +231,35 @@ class ContentViewModel: ObservableObject {
   }
 
   /// Exports health data in an async function which can be exported to the transferable object w/ proper await support
-  func asyncExportHealthData() async -> URL {
-    // analytics logging
-    Task.detached {
-      await MainActor.run { [weak self] in
-        if let self = self { self.logExportOccurred() }
-      }
-    }
+  func asyncExportHealthData() async throws -> URL {
+    let interval =
+      make_date_range_predicate() == nil
+      ? nil
+      : DateInterval(start: min(startDate, endDate), end: max(startDate, endDate))
+    let request = ExportRequest(
+      quantityIdentifiers: selectedQuantityTypes,
+      format: selectedExportFormat,
+      dateInterval: interval)
 
-    return await withUnsafeContinuation { continuation in
-      exportHealthData(continuation: continuation)
+    do {
+      let artifact = try await exporter.export(request)
+      await MainActor.run {
+        exportErrorMessage = nil
+        logExportOccurred()
+      }
+      return artifact.url
+    } catch {
+      await MainActor.run {
+        exportErrorMessage =
+          (error as? LocalizedError)?.errorDescription
+          ?? String(localized: "The export could not be completed.")
+      }
+      throw error
     }
   }
 
-  /// Exports health data to the share sheet
+  #if false
+  /// Legacy callback export path retained temporarily for reference.
   func exportHealthData(continuation: ExportContinuation) {
     // Converts the selected quantity types
     let generatedQuantityTypes: Set<HKObjectType> = Set(
@@ -514,6 +548,16 @@ class ContentViewModel: ObservableObject {
     let fileURL = URL(fileURLWithPath: filePath)
 
     continuation.resume(returning: fileURL)
+  }
+
+  #endif
+
+  func sanitizeForCSV(_ input: String) -> String {
+    CSVWriter(
+      headers: csv_headers,
+      dateFormatter: itemFormatter,
+      numberFormatter: numberFormatter
+    ).sanitize(input)
   }
 
   /// Makes a comma separated list of selectedQuantityTypes
