@@ -139,4 +139,75 @@ final class ExportCSVTests: XCTestCase {
 
     try? FileManager.default.removeItem(at: url)
   }
+
+  func testCSVExportsFiftyThousandRows() async throws {
+    let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
+    let samples = TestSampleFactory.makeGappedSamples(
+      type: .stepCount,
+      unit: .count(),
+      count: sample_cap,
+      durationSeconds: 1,
+      gapSeconds: 120,
+      value: 42)
+
+    let url = await exportCSV(
+      results: [stepType: samples],
+      units: [stepType: .count()])
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let data = try Data(contentsOf: url)
+    XCTAssertFalse(data.isEmpty)
+    XCTAssertEqual(data.filter { $0 == 0x0A }.count, sample_cap + 1)
+  }
+}
+
+final class CSVExportPerformanceTests: XCTestCase {
+
+  private func samples(count: Int) -> [HKSample] {
+    TestSampleFactory.makeGappedSamples(
+      type: .stepCount,
+      unit: .count(),
+      count: count,
+      durationSeconds: 1,
+      gapSeconds: 120,
+      value: 42)
+  }
+
+  private func export(_ samples: [HKSample]) async -> TimeInterval {
+    let viewModel = ContentViewModel(healthStore: MockHealthStore())
+    let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
+    let start = ProcessInfo.processInfo.systemUptime
+    let url = await withUnsafeContinuation { continuation in
+      viewModel.exportCSVData(
+        [stepType: samples],
+        continuation: continuation,
+        unitsMapping: [stepType: .count()])
+    }
+    let duration = ProcessInfo.processInfo.systemUptime - start
+    try? FileManager.default.removeItem(at: url)
+    return duration
+  }
+
+  private func median(_ values: [TimeInterval]) -> TimeInterval {
+    values.sorted()[values.count / 2]
+  }
+
+  func testCSVExportScalesToFiftyThousandRows() async {
+    let tenThousand = samples(count: 10_000)
+    let fiftyThousand = samples(count: sample_cap)
+
+    _ = await export(tenThousand)
+
+    var smallRuns: [TimeInterval] = []
+    var largeRuns: [TimeInterval] = []
+    for _ in 0..<3 {
+      smallRuns.append(await export(tenThousand))
+      largeRuns.append(await export(fiftyThousand))
+    }
+
+    let smallMedian = median(smallRuns)
+    let largeMedian = median(largeRuns)
+    XCTAssertLessThan(largeMedian, 10)
+    XCTAssertLessThanOrEqual(largeMedian, smallMedian * 12)
+  }
 }
