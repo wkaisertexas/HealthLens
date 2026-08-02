@@ -23,9 +23,28 @@ final class ExportXLSXTests: XCTestCase {
     results: [HKObjectType: [HKSample]],
     units: [HKObjectType: HKUnit] = [:]
   ) async -> URL {
-    return await withUnsafeContinuation { continuation in
-      viewModel.exportELSXData(results, continuation: continuation, unitsMapping: units)
+    var records: [ExportRecord] = []
+    for (type, samples) in results.sorted(by: { $0.key.identifier < $1.key.identifier }) {
+      guard let quantityType = type as? HKQuantityType else { continue }
+      let unit =
+        units[type]
+        ?? viewModel.fallbackUnits.first { quantityType.is(compatibleWith: $0) }
+        ?? .count()
+      let identifier = HKQuantityTypeIdentifier(rawValue: type.identifier)
+      for sample in samples.compactMap({ $0 as? HKQuantitySample }) {
+        records.append(
+          ExportRecord(
+            date: sample.startDate,
+            category: viewModel.quantityMapping[identifier] ?? "Unknown",
+            unit: unit.unitString,
+            value: sample.quantity.doubleValue(for: unit)))
+      }
     }
+    return try! XLSXWriter(
+      headers: viewModel.xlsx_headers,
+      dateFormatter: xlsxTestDateFormatter(),
+      numberFormatter: xlsxTestNumberFormatter()
+    ).write(records: records)
   }
 
   // MARK: - File creation
@@ -165,4 +184,39 @@ final class ExportXLSXTests: XCTestCase {
       try? FileManager.default.removeItem(at: url)
     }
   }
+
+  func testXLSXFileSystemFailureThrowsTypedError() {
+    let writer = XLSXWriter(
+      headers: ["Datetime", "Category", "Unit", "Value"],
+      dateFormatter: xlsxTestDateFormatter(),
+      numberFormatter: xlsxTestNumberFormatter(),
+      directory: URL(fileURLWithPath: "/dev/null"))
+
+    XCTAssertThrowsError(try writer.write(records: [])) { error in
+      switch error {
+      case HealthExportError.xlsxCreationFailed,
+        HealthExportError.xlsxFinalizationFailed:
+        break
+      default:
+        XCTFail("Unexpected error: \(error)")
+      }
+    }
+  }
+}
+
+private func xlsxTestDateFormatter() -> DateFormatter {
+  let formatter = DateFormatter()
+  formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+  formatter.locale = Locale(identifier: "en_US_POSIX")
+  formatter.timeZone = TimeZone(secondsFromGMT: 0)
+  return formatter
+}
+
+private func xlsxTestNumberFormatter() -> NumberFormatter {
+  let formatter = NumberFormatter()
+  formatter.numberStyle = .decimal
+  formatter.minimumFractionDigits = 2
+  formatter.maximumFractionDigits = 2
+  formatter.locale = Locale(identifier: "en_US_POSIX")
+  return formatter
 }

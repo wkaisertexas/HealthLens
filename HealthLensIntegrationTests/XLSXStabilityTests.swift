@@ -33,7 +33,7 @@ final class XLSXStabilityTests: XCTestCase {
     let expectation = self.expectation(description: "XLSX Step Count")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
       XCTAssertTrue(url.lastPathComponent.hasSuffix(".xlsx"))
@@ -63,7 +63,7 @@ final class XLSXStabilityTests: XCTestCase {
     let expectation = self.expectation(description: "XLSX Multi-Type")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
@@ -88,7 +88,7 @@ final class XLSXStabilityTests: XCTestCase {
 
     Task {
       for i in 0..<10 {
-        let url = await viewModel.asyncExportHealthData()
+        let url = try! await viewModel.asyncExportHealthData()
 
         XCTAssertTrue(
           FileManager.default.fileExists(atPath: url.path),
@@ -118,7 +118,7 @@ final class XLSXStabilityTests: XCTestCase {
     let expectation = self.expectation(description: "XLSX All Types")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 

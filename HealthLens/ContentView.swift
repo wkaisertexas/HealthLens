@@ -45,6 +45,18 @@ struct ContentView: View {
         text: $contentViewModel.searchText,
         prompt: "Search Health Data"
       )
+      .alert(
+        "Export Failed",
+        isPresented: Binding(
+          get: { contentViewModel.exportErrorMessage != nil },
+          set: { if !$0 { contentViewModel.exportErrorMessage = nil } })
+      ) {
+        Button("OK", role: .cancel) {
+          contentViewModel.exportErrorMessage = nil
+        }
+      } message: {
+        Text(contentViewModel.exportErrorMessage ?? "")
+      }
     }
   }
 

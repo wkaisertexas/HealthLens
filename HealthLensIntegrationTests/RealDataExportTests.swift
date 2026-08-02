@@ -33,7 +33,7 @@ final class RealDataExportTests: XCTestCase {
     let expectation = self.expectation(description: "Step Count Export")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
@@ -66,7 +66,7 @@ final class RealDataExportTests: XCTestCase {
     let expectation = self.expectation(description: "Heart Rate Export")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       if let content = try? String(contentsOf: url, encoding: .utf8) {
         let lines = content.components(separatedBy: "\n").filter { !$0.isEmpty }
@@ -93,7 +93,7 @@ final class RealDataExportTests: XCTestCase {
     let expectation = self.expectation(description: "Time in Daylight Export")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       if let content = try? String(contentsOf: url, encoding: .utf8) {
         let lines = content.components(separatedBy: "\n").filter { !$0.isEmpty }
@@ -123,7 +123,7 @@ final class RealDataExportTests: XCTestCase {
     let expectation = self.expectation(description: "Multi-Type Export")
 
     Task {
-      let url = await viewModel.asyncExportHealthData()
+      let url = try! await viewModel.asyncExportHealthData()
 
       XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 

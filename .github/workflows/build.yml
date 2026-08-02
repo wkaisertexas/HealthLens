@@ -13,6 +13,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -30,5 +31,28 @@ jobs:
             -scheme HealthLens \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -only-testing:HealthLensTests \
+            -skip-testing:HealthLensTests/CSVExportPerformanceTests \
+            -parallel-testing-enabled NO \
+            -resultBundlePath FastTests.xcresult \
             -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: CSV Export Performance Tests
+        run: |
+          xcodebuild test \
+            -scheme HealthLens \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -only-testing:HealthLensTests/CSVExportPerformanceTests \
+            -parallel-testing-enabled NO \
+            -resultBundlePath PerformanceTests.xcresult \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            FastTests.xcresult
+            PerformanceTests.xcresult
